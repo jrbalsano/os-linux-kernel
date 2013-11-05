@@ -7291,6 +7291,9 @@ struct task_group *sched_create_group(struct task_group *parent)
 
 	if (!alloc_rt_sched_group(tg, parent))
 		goto err;
+	
+	if (!alloc_mycfs_sched_group(tg, parent))
+		goto err;
 
 	spin_lock_irqsave(&task_group_lock, flags);
 	list_add_rcu(&tg->list, &task_groups);

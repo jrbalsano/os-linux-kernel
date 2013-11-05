@@ -10,6 +10,41 @@ enqueue_task_mycfs(struct rq *rq, struct task_struct *p, int flags)
 	}
 }
 
+int alloc_mycfs_sched_group(struct task_group *tg, struct task_group *parent)
+{
+	struct mycfs_rq *mycfs_rq;
+	struct sched_mycfs_entity *mycfs_se;
+	int i;
+
+	tg->mycfs_rq = kzalloc(sizeof(mycfs_rq) * nr_cpu_ids, GFP_KERNEL);
+	if (!tg->mycfs_rq)
+		goto err;
+	tg->mycfs_se = kzalloc(sizeof(mycfs_se) * nr_cpu_ids, GFP_KERNEL);
+	if (!tg->mycfs_se)
+		goto err;
+
+	for (i = 0; i < nr_cpu_ids; i++) {
+		mycfs_rq = kzalloc_node(sizeof(struct mycfs_rq),
+				      GFP_KERNEL, cpu_to_node(i));
+		if (!mycfs_rq)
+			goto err;
+
+		mycfs_se = kzalloc_node(sizeof(struct sched_mycfs_entity),
+				  GFP_KERNEL, cpu_to_node(i));
+		if (!mycfs_se)
+			goto err_free_rq;
+
+		cfs_rq->root = RB_ROOT;
+	}
+
+	return 1;
+
+err_free_rq:
+	kfree(cfs_rq);
+err:
+	return 0;
+}
+
 static inline int entity_before(struct sched_entity *a,
 				struct sched_entity *b)
 {
