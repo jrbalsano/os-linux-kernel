@@ -314,7 +314,7 @@ struct rt_rq {
 
 struct mycfs_rq {
 	//The root of the cfs rb tree
-	struct rb_root root = RB_ROOT;
+	struct rb_root root;
 
 	//The currently running process
 	struct sched_entity *curr;
