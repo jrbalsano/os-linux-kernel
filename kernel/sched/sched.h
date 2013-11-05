@@ -3,6 +3,7 @@
 #include <linux/mutex.h>
 #include <linux/spinlock.h>
 #include <linux/stop_machine.h>
+#include <linux/rbtree.h>
 
 #include "cpupri.h"
 
@@ -311,6 +312,14 @@ struct rt_rq {
 #endif
 };
 
+struct mycfs_rq {
+	//The root of the cfs rb tree
+	struct rb_root root = RB_ROOT;
+
+	//The currently running process
+	struct sched_entity *curr;
+}
+
 #ifdef CONFIG_SMP
 
 /*
@@ -371,6 +380,7 @@ struct rq {
 	u64 nr_switches;
 
 	struct cfs_rq cfs;
+	struct mycfs_rq my_cfs;
 	struct rt_rq rt;
 
 #ifdef CONFIG_FAIR_GROUP_SCHED
