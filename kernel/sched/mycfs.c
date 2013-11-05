@@ -15,7 +15,7 @@ static void dequeue_task_mycfs(struct rq *rq, struct task_struct *p, int flags)
 {
 
 	struct mycfs_rq *mycfs_rq;
-	struct sched_entity *mycfs = &p->mycfs;
+	struct sched_mycfs_entity *mycfs = &p->mycfs;
 
 	if(mycfs && mycfs->on_rq){
 		mycfs_rq = &rq->my_cfs;
