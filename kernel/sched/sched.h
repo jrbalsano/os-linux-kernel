@@ -117,6 +117,9 @@ struct task_group {
 	atomic_t load_weight;
 #endif
 
+	struct sched_mycfs_entity **mycfs_se;
+	struct mycfs_rq **mycfs_rq;
+
 #ifdef CONFIG_RT_GROUP_SCHED
 	struct sched_rt_entity **rt_se;
 	struct rt_rq **rt_rq;
@@ -194,6 +197,8 @@ extern int alloc_rt_sched_group(struct task_group *tg, struct task_group *parent
 extern void init_tg_rt_entry(struct task_group *tg, struct rt_rq *rt_rq,
 		struct sched_rt_entity *rt_se, int cpu,
 		struct sched_rt_entity *parent);
+
+extern int alloc_mycfs_sched_group(struct task_group *tg, struct task_group *parent);
 
 #else /* CONFIG_CGROUP_SCHED */
 
