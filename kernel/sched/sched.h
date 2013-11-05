@@ -316,6 +316,9 @@ struct mycfs_rq {
 	//The root of the cfs rb tree
 	struct rb_root root;
 
+	//The leftmost node of the rb tree
+	struct rb_node *rb_leftmost;
+
 	//The currently running process
 	struct sched_entity *curr;
 }
