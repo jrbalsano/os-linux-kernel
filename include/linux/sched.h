@@ -1233,6 +1233,12 @@ struct sched_entity {
 #endif
 };
 
+struct mycfs_sched_entity {
+	struct rb_node 		run_node;
+	u64			vruntime;
+}
+
+
 struct sched_rt_entity {
 	struct list_head run_list;
 	unsigned long timeout;
