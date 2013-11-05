@@ -8,7 +8,7 @@ enqueue_task_mycfs(struct rq *rq, struct task_struct *p, int flags)
 	struct sched_mycfs_entity *mycfs = &p->mycfs;
 	
 	if (mycfs) {
-		cfs_rq = &rq->my_cfs
+		mycfs_rq = &rq->my_cfs
 		__enqueue_entity(mycfs_rq, mycfs, flags);
 	}
 }
@@ -74,19 +74,38 @@ dequeue_entity(struct mycfs_rq *mycfs_rq, struct mycfs_sched_entity, int flags)
 	
 }
 static struct task_struct *pick_next_task_mycfs(struct rq *rq){
-
   struct mycfs_rq *my_cfs_rq = &rq->cfs; // Get the my_cfs run queue
   struct rb_node *left_most = mycfs_rq->rb_leftmost; // Get the left most child
   struct sched_mycfs_entity *entry = rb_entry(left_most, struct sched_mycfs_entity, run_node); // Get the entity of that child
   
   return container_of(entry, struct task_struct, mycfs); // Return the task struct of the task
 }
+
+static void task_tick_mycfs(struct rq *rq, struct task_struct *curr, int queued)
+{
+	struct mycfs_rq *mycfs_rq;
+	struct sched_entity *mycfs = &curr->mycfs;
+
+	if(mycfs){
+		mycfs_rq = &rq->my_cf;
+		entity_tick(mycfs_rq, mycfs, queued);
+
+	}
+
+}
+
+static void
+entity_tick(struct mycfs_rq *mycfs_rq, struct mycfs_sched_entity *curr, int queued)
+{
+
+}
+
+
 const struct sched_class mycfs_sched_class = {
 	.next 			= &idle_sched_class,
 	.enqueue_task   	= enqueue_task_mycfs,
 	.dequeue_task   	= dequeue_task_mycfs,
 	.pick_next_task 	= pick_next_task_mycfs,
-	.set_curr_task		= set_curr_task_mycfs,
 	.task_tick   		= task_tick_mycfs,
 
 }
