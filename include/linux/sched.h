@@ -1233,7 +1233,7 @@ struct sched_entity {
 #endif
 };
 
-struct mycfs_sched_entity {
+struct sched_mycfs_entity {
 	struct rb_node 		run_node;
 	u64			vruntime;
 }
@@ -1288,6 +1288,7 @@ struct task_struct {
 	const struct sched_class *sched_class;
 	struct sched_entity se;
 	struct sched_rt_entity rt;
+	struct sched_mycfs_entity mycfs;
 
 #ifdef CONFIG_PREEMPT_NOTIFIERS
 	/* list of struct preempt_notifier: */
