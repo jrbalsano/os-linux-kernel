@@ -45,11 +45,11 @@ static inline int entity_before(struct sched_mycfs_entity *a,
 static void __enqueue_mycfs_entity(struct mycfs_rq *mycfs_rq, struct sched_mycfs_entity *mycfs_se)
 {
 
-	printk("DGJ: __ENQUEUE_MYCFS_ENTITY\n");
 	struct rb_node **link = &mycfs_rq->root.rb_node;
 	struct rb_node *parent = NULL;
 	struct sched_mycfs_entity *entry;
 	int leftmost = 1;
+	printk("DGJ: __ENQUEUE_MYCFS_ENTITY\n");
 
 	/*
 	 * Find the right place in the rbtree:
@@ -84,10 +84,10 @@ static void
 enqueue_task_mycfs(struct rq *rq, struct task_struct *p, int flags)
 {
 
-        printk("DGJ: ENQUEUE_TASK_MYCFS\n");
 
 	struct mycfs_rq *mycfs_rq;
 	struct sched_mycfs_entity *mycfs = &p->mycfs;
+        printk("DGJ: ENQUEUE_TASK_MYCFS\n");
 	if (mycfs) {
 		mycfs_rq = &rq->my_cfs;
 		__enqueue_mycfs_entity(mycfs_rq, mycfs);
@@ -97,12 +97,12 @@ enqueue_task_mycfs(struct rq *rq, struct task_struct *p, int flags)
 int alloc_mycfs_sched_group(struct task_group *tg, struct task_group *parent)
 {
 
-	 printk("DGJ: ALLOC_MYCFS_SCHED_GROUP\n");
 
 	struct mycfs_rq *mycfs_rq;
 	struct sched_mycfs_entity *mycfs_se;
 	int i;
 
+	 printk("DGJ: ALLOC_MYCFS_SCHED_GROUP\n");
 
 	tg->mycfs_rq = kzalloc(sizeof(mycfs_rq) * nr_cpu_ids, GFP_KERNEL);
 	if (!tg->mycfs_rq)
@@ -153,10 +153,10 @@ static struct task_struct *pick_next_task_mycfs(struct rq *rq){
 static void dequeue_task_mycfs(struct rq *rq, struct task_struct *p, int flags)
 {
 
-        printk("DGJ: DEQUEUE_TASK_MYCFS\n");
 
 	struct mycfs_rq *mycfs_rq;
 	struct sched_mycfs_entity *mycfs = &p->mycfs;
+        printk("DGJ: DEQUEUE_TASK_MYCFS\n");
 
 	if(mycfs){
 	  mycfs_rq = &rq->my_cfs;
@@ -174,10 +174,10 @@ entity_tick(struct mycfs_rq *mycfs_rq, struct sched_mycfs_entity *curr, int queu
 static void task_tick_mycfs(struct rq *rq, struct task_struct *curr, int queued)
 {
 
-        printk("DGJ: TASK_TICK_MYCFS\n");
 
 	struct mycfs_rq *mycfs_rq;
 	struct sched_mycfs_entity *mycfs = &curr->mycfs;
+        printk("DGJ: TASK_TICK_MYCFS\n");
 
 	if(mycfs){
 		mycfs_rq = &rq->my_cfs;
