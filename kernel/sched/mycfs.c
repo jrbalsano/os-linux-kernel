@@ -127,11 +127,6 @@ err:
 static void
 dequeue_entity(struct mycfs_rq *mycfs_rq, struct sched_mycfs_entity *mycfs_se, int flags)
 {
-	update_curr(mycfs_rq);
-
-	
-	
-
 
 }
 
@@ -174,7 +169,7 @@ static void task_tick_mycfs(struct rq *rq, struct task_struct *curr, int queued)
 
 static void set_curr_task_mycfs(struct rq *rq)
 {
-	/*
+/*	
 	struct sched_mycfs_entity *mycfs = &rq->curr->mycfs;
 
 	if(mycfs){
@@ -183,8 +178,8 @@ static void set_curr_task_mycfs(struct rq *rq)
 
 
 	}
-	*/
 
+*/
 }
 
 static void yield_task_mycfs(struct rq *rq)
@@ -195,12 +190,6 @@ static void put_prev_task_mycfs(struct rq *rq, struct task_struct *prev)
 {
 }
 
-
-static unsigned int
-get_rr_interval_mycfs(struct rq *rq, struct task_struct *task)
-{
-        return 0;
-}
 
 static void
 check_preempt_curr_mycfs(struct rq *rq, struct task_struct *p, int flags)
@@ -215,7 +204,7 @@ get_rr_interval_mycfs(struct rq *rq, struct task_struct *task)
 
 #ifdef CONFIG_SMP
 static int
-select_task_rq_stop(struct task_struct *p, int sd_flag, int flags)
+select_task_rq_mycfs(struct task_struct *p, int sd_flag, int flags)
 {
         return 0; //task_cpu(p); /* stop tasks as never migrate */
 }
