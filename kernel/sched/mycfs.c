@@ -62,6 +62,7 @@ int alloc_mycfs_sched_group(struct task_group *tg, struct task_group *parent)
 	struct sched_mycfs_entity *mycfs_se;
 	int i;
 
+
 	tg->mycfs_rq = kzalloc(sizeof(mycfs_rq) * nr_cpu_ids, GFP_KERNEL);
 	if (!tg->mycfs_rq)
 		goto err;
