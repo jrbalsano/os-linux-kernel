@@ -81,7 +81,7 @@ enqueue_task_mycfs(struct rq *rq, struct task_struct *p, int flags)
 {
 	struct mycfs_rq *mycfs_rq;
 	struct sched_mycfs_entity *mycfs = &p->mycfs;
-	
+	printk("\n\n\nEnqueuing\n\n\n");	
 	if (mycfs) {
 		mycfs_rq = &rq->my_cfs;
 		__enqueue_mycfs_entity(mycfs_rq, mycfs);
