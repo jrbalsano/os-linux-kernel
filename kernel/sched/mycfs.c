@@ -3,71 +3,6 @@
 #include <linux/smp.h>
 #include "sched.h"
 
-/*
-<<<<<<< HEAD
-static void update_curr(struct mycfs_rq *mycfs_rq)
-{
-
-
-	struct sched_mycfs_entity *curr = mycfs_rq->curr;
-	
-	unsigned long delta_exec;
-=======
-   static void update_curr(struct mycfs_rq *mycfs_rq)
-   {
-   struct sched_mycfs_entity *curr = mycfs_rq->curr;
->>>>>>> 9ca50fc61ab7e4ad3507decaefbd7e5db229b372
-
-   unsigned long delta_exec;
-
-<<<<<<< HEAD
-	delta_exec = (unsigned long)(now - curr->exec_start);
-	
-	if(!delta_exec)
-		return;
-	
-	__update_curr(mycfs_rq, curr, delta_exec);
-	curr->exec_start = now;
-	
-}
-
-
-static inline void
-__update_curr(struct mycfs_rq *mycfs_rq, struct sched_mycfs_entity *curr, unsigned long delta_exec)
-{
-	unsigned long delta_exec_weighted;
-	mycfs_rq->exec_clock += delta_exec; //not sure why fair.c needs a special function for this
-	delta_exec_unweighted = 
-
-
-}
-*/
-/*
-   u64 now = mycfs_rq->rq->clock_task;
-
-   delta_exec = (unsigned long)(now - curr->exec_start);
-
-   if(!delta_exec)
-   return;
-
-   __update_curr(mycfs_rq, curr, delta_exec);
-   curr->exec_start = now;
-
-
-
-   }
-
-   static inline void
-   __update_curr(struct mycfs_rq *mycfs_rq, struct sched_mycfs_entity *curr, unsigned long delta_exec)
-   {
-   unsigned long delta_exec_weighted;
-   mycfs_rq->exec_clock += delta_exec; //not sure why fair.c needs a special function for this
-   delta_exec_unweighted = 
-
-
-   }
- */
-
 static inline int entity_before(struct sched_mycfs_entity *a,
 		struct sched_mycfs_entity *b)
 {
@@ -135,7 +70,7 @@ enqueue_task_mycfs(struct rq *rq, struct task_struct *p, int flags)
 	printk("DGJ[%d]: ENQUEUE_TASK_MYCFS\n", smp_processor_id());
 	if (mycfs) {
 		mycfs_rq = &rq->my_cfs;
-		mycfs_rq->nr_running = 1;
+		mycfs_rq->nr_running++;
 		__enqueue_mycfs_entity(mycfs_rq, mycfs);
 	}
 }
@@ -207,14 +142,6 @@ static struct task_struct *pick_next_task_mycfs(struct rq *rq){
 	struct mycfs_rq *mycfs_rq = &rq->my_cfs; // Get the my_cfs run queue
 	struct rb_node *left_most = mycfs_rq->rb_leftmost; // Get the left most child
 	struct sched_mycfs_entity *entry = rb_entry(left_most, struct sched_mycfs_entity, run_node); // Get the entity of that child
-
-
-  /* struct mycfs_rq *mycfs_rq = &rq->my_cfs; // Get the my_cfs run queue */
-  /* struct rb_node *left_most = mycfs_rq->rb_leftmost; // Get the left most child */
-  /* struct sched_mycfs_entity *entry = rb_entry(left_most, struct sched_mycfs_entity, run_node); // Get the entity of that child */
-  
-  /* return container_of(entry, struct task_struct, mycfs); // Return the task struct of the task */
-
   if (rq->my_cfs.nr_running) { 
     return container_of(entry, struct task_struct, mycfs); // Return the task struct of the task
   }
@@ -229,7 +156,7 @@ static void dequeue_task_mycfs(struct rq *rq, struct task_struct *p, int flags)
 
 	if(mycfs){
 		mycfs_rq = &rq->my_cfs;
-		mycfs_rq->nr_running = 0;
+		mycfs_rq->nr_running--;
 		__dequeue_entity(mycfs_rq, mycfs, flags);
 	}
 }
