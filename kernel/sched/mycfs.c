@@ -97,8 +97,6 @@ enqueue_task_mycfs(struct rq *rq, struct task_struct *p, int flags)
 
 int alloc_mycfs_sched_group(struct task_group *tg, struct task_group *parent)
 {
-
-
 	struct mycfs_rq *mycfs_rq;
 	struct sched_mycfs_entity *mycfs_se;
 	int i;
@@ -165,14 +163,15 @@ __dequeue_entity(struct mycfs_rq *mycfs_rq, struct sched_mycfs_entity *mycfs_se,
 static struct task_struct *pick_next_task_mycfs(struct rq *rq){
 	struct mycfs_rq *mycfs_rq = &rq->my_cfs; // Get the my_cfs run queue
 	struct rb_node *left_most = mycfs_rq->rb_leftmost; // Get the left most child
-	struct sched_mycfs_entity *entry = rb_entry(left_most, struct sched_mycfs_entity, run_node); // Get the entity of that child
+	struct sched_mycfs_entity *entry;
+	if (!left_most) {
+		return NULL;
+	}
+
+	entry = rb_entry(left_most, struct sched_mycfs_entity, run_node); // Get the entity of that child
 	
 	entry->exec_start = mycfs_rq->rq->clock_task;
-
-  if (rq->my_cfs.nr_running) { 
-    return container_of(entry, struct task_struct, mycfs); // Return the task struct of the task
-  }
-  return NULL;
+	return container_of(entry, struct task_struct, mycfs); // Return the task struct of the task
 }
 
 static void dequeue_task_mycfs(struct rq *rq, struct task_struct *p, int flags)
