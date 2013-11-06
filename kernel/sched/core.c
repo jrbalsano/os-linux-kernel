@@ -727,6 +727,8 @@ static void enqueue_task(struct rq *rq, struct task_struct *p, int flags)
 	update_rq_clock(rq);
 	sched_info_queued(p);
 	p->sched_class->enqueue_task(rq, p, flags);
+	if(p->policy == SCHED_MYCFS)
+		printk("DGJ: 1 ENQUEUE_TASK CALLED FROM core.c\n");
 }
 
 static void dequeue_task(struct rq *rq, struct task_struct *p, int flags)
@@ -742,6 +744,10 @@ void activate_task(struct rq *rq, struct task_struct *p, int flags)
 		rq->nr_uninterruptible--;
 
 	enqueue_task(rq, p, flags);
+
+        if(p->policy == SCHED_MYCFS)
+                printk("DGJ: 2 ENQUEUE_TASK CALLED FROM core.c\n");
+
 }
 
 void deactivate_task(struct rq *rq, struct task_struct *p, int flags)
@@ -3879,6 +3885,10 @@ void rt_mutex_setprio(struct task_struct *p, int prio)
 	if (on_rq)
 		enqueue_task(rq, p, oldprio < prio ? ENQUEUE_HEAD : 0);
 
+        if(p->policy == SCHED_MYCFS)
+                printk("DGJ: 3 ENQUEUE_TASK CALLED FROM core.c\n");
+
+
 	check_class_changed(rq, p, prev_class, oldprio);
 out_unlock:
 	__task_rq_unlock(rq);
@@ -3918,7 +3928,11 @@ void set_user_nice(struct task_struct *p, long nice)
 	delta = p->prio - old_prio;
 
 	if (on_rq) {
-		enqueue_task(rq, p, 0);
+		enqueue_task(rq, p, 0); 
+
+        if(p->policy == SCHED_MYCFS)
+                printk("DGJ: 4 ENQUEUE_TASK CALLED FROM core.c\n");
+
 		/*
 		 * If the task increased its priority or is running and
 		 * lowered its priority, then reschedule its CPU:
@@ -4059,12 +4073,12 @@ __setscheduler(struct rq *rq, struct task_struct *p, int policy, int prio)
 	p->normal_prio = normal_prio(p);
 	/* we are holding p->pi_lock already */
 	p->prio = rt_mutex_getprio(p);
-	if (rt_prio(p->prio))
-		p->sched_class = &rt_sched_class;
-	else if (policy == SCHED_MYCFS)
-		p->sched_class = &mycfs_sched_class;
+	if (policy == SCHED_MYCFS)
+	  p->sched_class = &mycfs_sched_class;
+	else if (rt_prio(p->prio))
+	  p->sched_class = &rt_sched_class;
 	else
-		p->sched_class = &fair_sched_class;
+	  p->sched_class = &fair_sched_class;
 	set_load_weight(p);
 }
 
@@ -4234,10 +4248,27 @@ recheck:
 	if (on_rq)
 		enqueue_task(rq, p, 0);
 
+
+        if(p->policy == SCHED_MYCFS)
+                printk("DGJ: 5 ENQUEUE_TASK CALLED FROM core.c\n");
+
+
 	check_class_changed(rq, p, prev_class, oldprio);
+
+        if(p->policy == SCHED_MYCFS)
+                printk("DGJ: reached 1 the end of __sched_setscheduler\n");
+	
+
 	task_rq_unlock(rq, p, &flags);
 
+        if(p->policy == SCHED_MYCFS)
+                printk("DGJ: reached 2 the end of __sched_setscheduler\n");
+
+
 	rt_mutex_adjust_pi(p);
+
+	if(p->policy == SCHED_MYCFS)
+		printk("DGJ: reached 3 the end of __sched_setscheduler\n");
 
 	return 0;
 }
@@ -5104,6 +5135,11 @@ static int __migrate_task(struct task_struct *p, int src_cpu, int dest_cpu)
 		dequeue_task(rq_src, p, 0);
 		set_task_cpu(p, dest_cpu);
 		enqueue_task(rq_dest, p, 0);
+
+		if(p->policy == SCHED_MYCFS)
+                	printk("DGJ: 1 ENQUEUE_TASK CALLED FROM core.c\n");
+
+
 		check_preempt_curr(rq_dest, p, 0);
 		moved = true;
 	}
@@ -7169,6 +7205,11 @@ static void normalize_task(struct rq *rq, struct task_struct *p)
 	__setscheduler(rq, p, SCHED_NORMAL, 0);
 	if (on_rq) {
 		enqueue_task(rq, p, 0);
+
+	        if(p->policy == SCHED_MYCFS)
+        	        printk("DGJ: 7 ENQUEUE_TASK CALLED FROM core.c\n");
+
+
 		resched_task(rq->curr);
 	}
 

@@ -5,6 +5,8 @@
 /*
 static void update_curr(struct mycfs_rq *mycfs_rq)
 {
+
+
 	struct sched_mycfs_entity *curr = mycfs_rq->curr;
 	
 	unsigned long delta_exec;
@@ -18,10 +20,9 @@ static void update_curr(struct mycfs_rq *mycfs_rq)
 	
 	__update_curr(mycfs_rq, curr, delta_exec);
 	curr->exec_start = now;
-
-
 	
 }
+
 
 static inline void
 __update_curr(struct mycfs_rq *mycfs_rq, struct sched_mycfs_entity *curr, unsigned long delta_exec)
@@ -33,7 +34,18 @@ __update_curr(struct mycfs_rq *mycfs_rq, struct sched_mycfs_entity *curr, unsign
 
 }
 */
-
+static void prio_changed_mycfs(struct rq *rq, struct task_struct *p, int oldprio)
+{
+  printk("DGJ: PRIORITY CHANGED\n");
+}
+static void switched_to_mycfs(struct rq *rq, struct task_struct *p)
+{
+  printk("DGJ: SWITCHED TO\n");
+}
+static void switched_from_mycfs(struct rq *rq, struct task_struct *p)
+{
+  printk("DGJ: SWITCHED FROM\n");
+}
 static inline int entity_before(struct sched_mycfs_entity *a,
 				struct sched_mycfs_entity *b)
 {
@@ -49,12 +61,15 @@ static void __enqueue_mycfs_entity(struct mycfs_rq *mycfs_rq, struct sched_mycfs
 	struct rb_node *parent = NULL;
 	struct sched_mycfs_entity *entry;
 	int leftmost = 1;
+	int i = 1;
 	printk("DGJ: __ENQUEUE_MYCFS_ENTITY\n");
 
 	/*
 	 * Find the right place in the rbtree:
 	 */
+	printk("DGJ: %p\n", *link);
 	while (*link) {
+	  printk("DGJ: INSIDE #%d", i++);
 		parent = *link;
 		entry = rb_entry(parent, struct sched_mycfs_entity, run_node);
 		/*
@@ -76,8 +91,16 @@ static void __enqueue_mycfs_entity(struct mycfs_rq *mycfs_rq, struct sched_mycfs
 	if (leftmost)
 		mycfs_rq->rb_leftmost = &mycfs_se->run_node;
 
+	printk("DGJ: ALMOST REACHING 1 ENDOF __ENQUEUE_MYCFS_ENTITY\n");
+
 	rb_link_node(&mycfs_se->run_node, parent, link);
+	
+	printk("DGJ: ALMOST REACHING 2 ENDOF __ENQUEUE_MYCFS_ENTITY\n");
+	
 	rb_insert_color(&mycfs_se->run_node, &mycfs_rq->root);
+
+	printk("DGJ: ALMOST REACHING 3 ENDOF __ENQUEUE_MYCFS_ENTITY\n");
+
 }
 
 static void
@@ -101,7 +124,7 @@ int alloc_mycfs_sched_group(struct task_group *tg, struct task_group *parent)
 	struct mycfs_rq *mycfs_rq;
 	struct sched_mycfs_entity *mycfs_se;
 	int i;
-
+	struct rb_node **link;
 	 printk("DGJ: ALLOC_MYCFS_SCHED_GROUP\n");
 
 	tg->mycfs_rq = kzalloc(sizeof(mycfs_rq) * nr_cpu_ids, GFP_KERNEL);
@@ -123,6 +146,12 @@ int alloc_mycfs_sched_group(struct task_group *tg, struct task_group *parent)
 			goto err_free_rq;
 
 		mycfs_rq->root = RB_ROOT;
+
+
+		/* TEST CODE DG */
+		link = &mycfs_rq->root.rb_node;
+		printk("DGJ: ALLOC %p\n", *link);
+		
 	}
 
 	return 1;
@@ -147,6 +176,7 @@ static struct task_struct *pick_next_task_mycfs(struct rq *rq){
   /* struct sched_mycfs_entity *entry = rb_entry(left_most, struct sched_mycfs_entity, run_node); // Get the entity of that child */
   
   /* return container_of(entry, struct task_struct, mycfs); // Return the task struct of the task */
+
   return NULL;
 }
 
@@ -210,7 +240,6 @@ static void yield_task_mycfs(struct rq *rq)
 static void put_prev_task_mycfs(struct rq *rq, struct task_struct *prev)
 {
       printk("DGJ: PUT_PREV_TASK_MYCFS\n");
-
 }
 
 
@@ -259,5 +288,8 @@ const struct sched_class mycfs_sched_class = {
 	.put_prev_task		= put_prev_task_mycfs,
 	.select_task_rq		= select_task_rq_mycfs,
 	.task_fork		= task_fork_mycfs,
+	.prio_changed		= prio_changed_mycfs,
+	.switched_from		= switched_from_mycfs,
+	.switched_to		= switched_to_mycfs,
 
 };
