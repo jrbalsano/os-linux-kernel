@@ -1236,7 +1236,7 @@ struct sched_entity {
 struct sched_mycfs_entity {
 	struct rb_node 		run_node;
 	u64			vruntime;
-}
+};
 
 
 struct sched_rt_entity {

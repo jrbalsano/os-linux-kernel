@@ -326,7 +326,7 @@ struct mycfs_rq {
 
 	//The currently running process
 	struct sched_entity *curr;
-}
+};
 
 #ifdef CONFIG_SMP
 
