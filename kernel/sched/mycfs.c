@@ -41,18 +41,6 @@ __update_curr(struct mycfs_rq *mycfs_rq, struct sched_mycfs_entity *curr, unsign
 
 }
 */
-static void prio_changed_mycfs(struct rq *rq, struct task_struct *p, int oldprio)
-{
-  printk("DGJ: PRIORITY CHANGED\n");
-}
-static void switched_to_mycfs(struct rq *rq, struct task_struct *p)
-{
-  printk("DGJ: SWITCHED TO\n");
-}
-static void switched_from_mycfs(struct rq *rq, struct task_struct *p)
-{
-  printk("DGJ: SWITCHED FROM\n");
-}
 /*
    u64 now = mycfs_rq->rq->clock_task;
 
@@ -102,7 +90,7 @@ static void __enqueue_mycfs_entity(struct mycfs_rq *mycfs_rq, struct sched_mycfs
 	 */
 	printk("DGJ: %p\n", *link);
 	while (*link) {
-	  printk("DGJ: INSIDE #%d", i++);
+	  printk("DGJ: INSIDE %d", i++);
 		parent = *link;
 		entry = rb_entry(parent, struct sched_mycfs_entity, run_node);
 		/*
@@ -275,7 +263,7 @@ static void yield_task_mycfs(struct rq *rq)
 
 static void put_prev_task_mycfs(struct rq *rq, struct task_struct *prev)
 {
-      printk("DGJ: PUT_PREV_TASK_MYCFS\n");
+  //      printk("DGJ: PUT_PREV_TASK_MYCFS\n");
 }
 
 	static void
@@ -320,7 +308,7 @@ static void switched_from_mycfs(struct rq *rq, struct task_struct *p)
 	printk("DGJ: SWITCHED_FROM_MYCFS\n");
 }
 
-	static void
+static void
 prio_changed_mycfs(struct rq *rq, struct task_struct *p, int oldprio)
 {
 	printk("DGJ: PRIO_CHANGED_MYCFS\n");
