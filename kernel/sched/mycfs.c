@@ -125,7 +125,7 @@ static void __enqueue_mycfs_entity(struct mycfs_rq *mycfs_rq, struct sched_mycfs
 
 }
 
-	static void
+static void
 enqueue_task_mycfs(struct rq *rq, struct task_struct *p, int flags)
 {
 
@@ -187,10 +187,19 @@ err:
 	return 0;
 }
 
-	static void
-dequeue_entity(struct mycfs_rq *mycfs_rq, struct sched_mycfs_entity *mycfs_se, int flags)
+static void
+__dequeue_entity(struct mycfs_rq *mycfs_rq, struct sched_mycfs_entity *mycfs_se, int flags)
 {
   printk("DGJ[%d]: DEQUEUE_ENTITY\n", smp_processor_id());
+
+  if(mycfs_rq->rb_leftmost == &mycfs_se->run_node){
+    struct rb_node *next_node;
+
+    next_node = rb_next(&mycfs_se->run_node);
+    mycfs_rq->rb_leftmost = next_node;
+  }
+  
+  rb_erase(&mycfs_se->run_node, &mycfs_rq->root);
 
 }
 
@@ -221,7 +230,7 @@ static void dequeue_task_mycfs(struct rq *rq, struct task_struct *p, int flags)
 	if(mycfs){
 		mycfs_rq = &rq->my_cfs;
 		mycfs_rq->nr_running = 0;
-		dequeue_entity(mycfs_rq, mycfs, flags);
+		__dequeue_entity(mycfs_rq, mycfs, flags);
 	}
 }
 
