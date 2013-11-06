@@ -3,70 +3,26 @@
 #include <linux/smp.h>
 #include "sched.h"
 
-/*
-<<<<<<< HEAD
 static void update_curr(struct mycfs_rq *mycfs_rq)
 {
-
-
 	struct sched_mycfs_entity *curr = mycfs_rq->curr;
-	
+	u64 now = mycfs_rq->rq->clock_task;
 	unsigned long delta_exec;
-=======
-   static void update_curr(struct mycfs_rq *mycfs_rq)
-   {
-   struct sched_mycfs_entity *curr = mycfs_rq->curr;
->>>>>>> 9ca50fc61ab7e4ad3507decaefbd7e5db229b372
 
-   unsigned long delta_exec;
+	 /*
+          * Get the amount of time the current task was running
+          * since the last time we changed load (this cannot
+          * overflow on 32 bits):
+          */
+        delta_exec = (unsigned long)(now - curr->exec_start);
+        if (!delta_exec)
+	        return;
 
-<<<<<<< HEAD
-	delta_exec = (unsigned long)(now - curr->exec_start);
-	
-	if(!delta_exec)
-		return;
-	
-	__update_curr(mycfs_rq, curr, delta_exec);
-	curr->exec_start = now;
-	
-}
-
-
-static inline void
-__update_curr(struct mycfs_rq *mycfs_rq, struct sched_mycfs_entity *curr, unsigned long delta_exec)
-{
-	unsigned long delta_exec_weighted;
-	mycfs_rq->exec_clock += delta_exec; //not sure why fair.c needs a special function for this
-	delta_exec_unweighted = 
-
+	curr->vruntime += delta_exec;
+	curr->exec_start = now;  //do we actually need this here?
 
 }
-*/
-/*
-   u64 now = mycfs_rq->rq->clock_task;
 
-   delta_exec = (unsigned long)(now - curr->exec_start);
-
-   if(!delta_exec)
-   return;
-
-   __update_curr(mycfs_rq, curr, delta_exec);
-   curr->exec_start = now;
-
-
-
-   }
-
-   static inline void
-   __update_curr(struct mycfs_rq *mycfs_rq, struct sched_mycfs_entity *curr, unsigned long delta_exec)
-   {
-   unsigned long delta_exec_weighted;
-   mycfs_rq->exec_clock += delta_exec; //not sure why fair.c needs a special function for this
-   delta_exec_unweighted = 
-
-
-   }
- */
 
 static inline int entity_before(struct sched_mycfs_entity *a,
 		struct sched_mycfs_entity *b)
@@ -177,6 +133,10 @@ int alloc_mycfs_sched_group(struct task_group *tg, struct task_group *parent)
 		printk("DGJ[%d]: ALLOC %p\n", smp_processor_id(), *link);
 		
 		mycfs_rq->nr_running = 0;
+
+		//store cpu_rq in mycfs_rq
+		mycfs_rq->rq = cpu_rq(i);
+
 	}
 
 	return 1;
@@ -207,7 +167,9 @@ static struct task_struct *pick_next_task_mycfs(struct rq *rq){
 	struct mycfs_rq *mycfs_rq = &rq->my_cfs; // Get the my_cfs run queue
 	struct rb_node *left_most = mycfs_rq->rb_leftmost; // Get the left most child
 	struct sched_mycfs_entity *entry = rb_entry(left_most, struct sched_mycfs_entity, run_node); // Get the entity of that child
-
+	
+	//set the start time of the entry
+	entry->exec_start = mycfs_rq->rq->clock_task;
 
   /* struct mycfs_rq *mycfs_rq = &rq->my_cfs; // Get the my_cfs run queue */
   /* struct rb_node *left_most = mycfs_rq->rb_leftmost; // Get the left most child */
