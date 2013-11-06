@@ -329,6 +329,7 @@ struct mycfs_rq {
 
 	struct rq *rq;
 	u64 exec_clock;
+	u64 nr_running;
 };
 
 #ifdef CONFIG_SMP
