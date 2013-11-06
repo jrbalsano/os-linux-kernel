@@ -4245,13 +4245,11 @@ recheck:
 
 	if (running)
 		p->sched_class->set_curr_task(rq);
-	if (on_rq)
+	if (on_rq){
 		enqueue_task(rq, p, 0);
-
-
-        if(p->policy == SCHED_MYCFS)
-                printk("DGJ: 5 ENQUEUE_TASK CALLED FROM core.c\n");
-
+		if(p->policy == SCHED_MYCFS)
+		  printk("DGJ: 5 ENQUEUE_TASK CALLED FROM core.c\n");
+	}
 
 	check_class_changed(rq, p, prev_class, oldprio);
 
