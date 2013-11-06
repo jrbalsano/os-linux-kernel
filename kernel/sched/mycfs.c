@@ -191,6 +191,7 @@ static void dequeue_task_mycfs(struct rq *rq, struct task_struct *p, int flags)
 static void
 entity_tick(struct mycfs_rq *mycfs_rq, struct sched_mycfs_entity *curr, int queued)
 {
+  update_curr(mycfs_rq);
   printk("DGJ[%d]:ENTITY_TICK\n", smp_processor_id());
 
 }
