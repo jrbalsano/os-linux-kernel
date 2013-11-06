@@ -1,5 +1,6 @@
 #include <linux/sched.h>
 #include <linux/slab.h>
+#include <linux/smp.h>
 #include "sched.h"
 
 /*
@@ -71,7 +72,7 @@ static inline int entity_before(struct sched_mycfs_entity *a,
 		struct sched_mycfs_entity *b)
 {
 
-	printk("DGJ: ENTITY BEFORE\n");
+  printk("DGJ[%d]: ENTITY BEFORE\n", smp_processor_id());
 	return (s64)(a->vruntime - b->vruntime) < 0;
 }
 
@@ -83,14 +84,14 @@ static void __enqueue_mycfs_entity(struct mycfs_rq *mycfs_rq, struct sched_mycfs
 	struct sched_mycfs_entity *entry;
 	int leftmost = 1;
 	int i = 1;
-	printk("DGJ: __ENQUEUE_MYCFS_ENTITY\n");
+	printk("DGJ[%d]: __ENQUEUE_MYCFS_ENTITY\n", smp_processor_id());
 
 	/*
 	 * Find the right place in the rbtree:
 	 */
-	printk("DGJ: %p\n", *link);
+	printk("DGJ[%d]: %p\n", smp_processor_id(), *link);
 	while (*link) {
-	  printk("DGJ: INSIDE %d", i++);
+	  printk("DGJ[%d]: INSIDE %d", smp_processor_id(), i++);
 		parent = *link;
 		entry = rb_entry(parent, struct sched_mycfs_entity, run_node);
 		/*
@@ -112,15 +113,15 @@ static void __enqueue_mycfs_entity(struct mycfs_rq *mycfs_rq, struct sched_mycfs
 	if (leftmost)
 	mycfs_rq->rb_leftmost = &mycfs_se->run_node;
 
-	printk("DGJ: ALMOST REACHING 1 ENDOF __ENQUEUE_MYCFS_ENTITY\n");
+	printk("DGJ[%d]: ALMOST REACHING 1 ENDOF __ENQUEUE_MYCFS_ENTITY\n", smp_processor_id());
 
 	rb_link_node(&mycfs_se->run_node, parent, link);
 	
-	printk("DGJ: ALMOST REACHING 2 ENDOF __ENQUEUE_MYCFS_ENTITY\n");
+	printk("DGJ[%d]: ALMOST REACHING 2 ENDOF __ENQUEUE_MYCFS_ENTITY\n", smp_processor_id());
 	
 	rb_insert_color(&mycfs_se->run_node, &mycfs_rq->root);
 
-	printk("DGJ: ALMOST REACHING 3 ENDOF __ENQUEUE_MYCFS_ENTITY\n");
+	printk("DGJ[%d]: ALMOST REACHING 3 ENDOF __ENQUEUE_MYCFS_ENTITY\n", smp_processor_id());
 
 }
 
@@ -131,7 +132,7 @@ enqueue_task_mycfs(struct rq *rq, struct task_struct *p, int flags)
 
 	struct mycfs_rq *mycfs_rq;
 	struct sched_mycfs_entity *mycfs = &p->mycfs;
-	printk("DGJ: ENQUEUE_TASK_MYCFS\n");
+	printk("DGJ[%d]: ENQUEUE_TASK_MYCFS\n", smp_processor_id());
 	if (mycfs) {
 		mycfs_rq = &rq->my_cfs;
 		mycfs_rq->nr_running = 1;
@@ -148,7 +149,7 @@ int alloc_mycfs_sched_group(struct task_group *tg, struct task_group *parent)
 	int i;
 
 	struct rb_node **link;
-	printk("DGJ: ALLOC_MYCFS_SCHED_GROUP\n");
+	printk("DGJ[%d]: ALLOC_MYCFS_SCHED_GROUP\n", smp_processor_id());
 
 
 	tg->mycfs_rq = kzalloc(sizeof(mycfs_rq) * nr_cpu_ids, GFP_KERNEL);
@@ -173,7 +174,7 @@ int alloc_mycfs_sched_group(struct task_group *tg, struct task_group *parent)
 
 		/* TEST CODE DG */
 		link = &mycfs_rq->root.rb_node;
-		printk("DGJ: ALLOC %p\n", *link);
+		printk("DGJ[%d]: ALLOC %p\n", smp_processor_id(), *link);
 		
 		mycfs_rq->nr_running = 0;
 	}
@@ -189,7 +190,7 @@ err:
 	static void
 dequeue_entity(struct mycfs_rq *mycfs_rq, struct sched_mycfs_entity *mycfs_se, int flags)
 {
-	printk("DGJ: DEQUEUE_ENTITY\n");
+  printk("DGJ[%d]: DEQUEUE_ENTITY\n", smp_processor_id());
 
 }
 
@@ -215,7 +216,7 @@ static void dequeue_task_mycfs(struct rq *rq, struct task_struct *p, int flags)
 {
 	struct mycfs_rq *mycfs_rq;
 	struct sched_mycfs_entity *mycfs = &p->mycfs;
-	printk("DGJ: DEQUEUE_TASK_MYCFS\n");
+	printk("DGJ[%d]: DEQUEUE_TASK_MYCFS\n", smp_processor_id());
 
 	if(mycfs){
 		mycfs_rq = &rq->my_cfs;
@@ -227,7 +228,7 @@ static void dequeue_task_mycfs(struct rq *rq, struct task_struct *p, int flags)
 static void
 entity_tick(struct mycfs_rq *mycfs_rq, struct sched_mycfs_entity *curr, int queued)
 {
-	printk("DGJ:ENTITY_TICK\n");
+  printk("DGJ[%d]:ENTITY_TICK\n", smp_processor_id());
 
 }
 
@@ -237,7 +238,7 @@ static void task_tick_mycfs(struct rq *rq, struct task_struct *curr, int queued)
 
 	struct mycfs_rq *mycfs_rq;
 	struct sched_mycfs_entity *mycfs = &curr->mycfs;
-	printk("DGJ: TASK_TICK_MYCFS\n");
+	printk("DGJ[%d]: TASK_TICK_MYCFS\n", smp_processor_id());
 
 	if(mycfs){
 		mycfs_rq = &rq->my_cfs;
@@ -248,7 +249,7 @@ static void task_tick_mycfs(struct rq *rq, struct task_struct *curr, int queued)
 static void set_curr_task_mycfs(struct rq *rq)
 {
 	//	struct sched_mycfs_entity *mycfs = &rq->curr->mycfs;
-	printk("DGJ: SET_CURR_TASK_MYCFS\n");
+  printk("DGJ[%d]: SET_CURR_TASK_MYCFS\n", smp_processor_id());
 	/*
 	   if(mycfs){
 	   struct mycfs_rq = &rq->my_cfs;
@@ -258,25 +259,25 @@ static void set_curr_task_mycfs(struct rq *rq)
 
 static void yield_task_mycfs(struct rq *rq)
 {
-	printk("DGJ: YIELD_TASK_MYCFS\n");
+  printk("DGJ[%d]: YIELD_TASK_MYCFS\n", smp_processor_id());
 }
 
 static void put_prev_task_mycfs(struct rq *rq, struct task_struct *prev)
 {
-  //      printk("DGJ: PUT_PREV_TASK_MYCFS\n");
+  //      printk("DGJ[%d]: PUT_PREV_TASK_MYCFS\n", smp_processor_id());
 }
 
 	static void
 check_preempt_curr_mycfs(struct rq *rq, struct task_struct *p, int flags)
 {
-	printk("DGJ: CHECK_PREEMPT_CURR_MYCFS\n");
+  printk("DGJ[%d]: CHECK_PREEMPT_CURR_MYCFS\n", smp_processor_id());
 
 }
 
 	static unsigned int
 get_rr_interval_mycfs(struct rq *rq, struct task_struct *task)
 {
-	printk("DGJ: GET_RR_INTERVAL_MYCFS\n");
+  printk("DGJ[%d]: GET_RR_INTERVAL_MYCFS\n", smp_processor_id());
 
 	return 0;
 }
@@ -285,7 +286,7 @@ get_rr_interval_mycfs(struct rq *rq, struct task_struct *task)
 	static int
 select_task_rq_mycfs(struct task_struct *p, int sd_flag, int flags)
 {
-	printk("DGJ: SELECT_TASK_RQ_MYCFS\n");
+  printk("DGJ[%d]: SELECT_TASK_RQ_MYCFS\n", smp_processor_id());
 
 	return 0; //task_cpu(p); /* stop tasks as never migrate */
 }
@@ -294,24 +295,24 @@ select_task_rq_mycfs(struct task_struct *p, int sd_flag, int flags)
 	static void
 task_fork_mycfs (struct task_struct *p)
 {
-	printk("DGJ: TASK_FORK_MYCFS\n");
+  printk("DGJ[%d]: TASK_FORK_MYCFS\n", smp_processor_id());
 
 }
 
 static void switched_to_mycfs(struct rq *rq, struct task_struct *p)
 {
-	printk("DGJ: SWITCHED_TO_MYCFS\n");
+  printk("DGJ[%d]: SWITCHED_TO_MYCFS\n", smp_processor_id());
 }
 
 static void switched_from_mycfs(struct rq *rq, struct task_struct *p)
 { 
-	printk("DGJ: SWITCHED_FROM_MYCFS\n");
+  printk("DGJ[%d]: SWITCHED_FROM_MYCFS\n", smp_processor_id());
 }
 
 static void
 prio_changed_mycfs(struct rq *rq, struct task_struct *p, int oldprio)
 {
-	printk("DGJ: PRIO_CHANGED_MYCFS\n");
+  printk("DGJ[%d]: PRIO_CHANGED_MYCFS\n", smp_processor_id());
 }
 const struct sched_class mycfs_sched_class = {
 	.next 			= &idle_sched_class,
