@@ -37,11 +37,15 @@ __update_curr(struct mycfs_rq *mycfs_rq, struct sched_mycfs_entity *curr, unsign
 static inline int entity_before(struct sched_mycfs_entity *a,
 				struct sched_mycfs_entity *b)
 {
+
+	printk("DGJ: ENTITY BEFORE\n");
 	return (s64)(a->vruntime - b->vruntime) < 0;
 }
 
 static void __enqueue_mycfs_entity(struct mycfs_rq *mycfs_rq, struct sched_mycfs_entity *mycfs_se)
 {
+
+	printk("DGJ: __ENQUEUE_MYCFS_ENTITY\n");
 	struct rb_node **link = &mycfs_rq->root.rb_node;
 	struct rb_node *parent = NULL;
 	struct sched_mycfs_entity *entry;
@@ -79,9 +83,11 @@ static void __enqueue_mycfs_entity(struct mycfs_rq *mycfs_rq, struct sched_mycfs
 static void
 enqueue_task_mycfs(struct rq *rq, struct task_struct *p, int flags)
 {
+
+        printk("DGJ: ENQUEUE_TASK_MYCFS\n");
+
 	struct mycfs_rq *mycfs_rq;
 	struct sched_mycfs_entity *mycfs = &p->mycfs;
-	printk("\n\n\nEnqueuing\n\n\n");	
 	if (mycfs) {
 		mycfs_rq = &rq->my_cfs;
 		__enqueue_mycfs_entity(mycfs_rq, mycfs);
@@ -90,6 +96,9 @@ enqueue_task_mycfs(struct rq *rq, struct task_struct *p, int flags)
 
 int alloc_mycfs_sched_group(struct task_group *tg, struct task_group *parent)
 {
+
+	 printk("DGJ: ALLOC_MYCFS_SCHED_GROUP\n");
+
 	struct mycfs_rq *mycfs_rq;
 	struct sched_mycfs_entity *mycfs_se;
 	int i;
@@ -127,10 +136,12 @@ err:
 static void
 dequeue_entity(struct mycfs_rq *mycfs_rq, struct sched_mycfs_entity *mycfs_se, int flags)
 {
+        printk("DGJ: DEQUEUE_ENTITY\n");
 
 }
 
 static struct task_struct *pick_next_task_mycfs(struct rq *rq){
+
   /* struct mycfs_rq *mycfs_rq = &rq->my_cfs; // Get the my_cfs run queue */
   /* struct rb_node *left_most = mycfs_rq->rb_leftmost; // Get the left most child */
   /* struct sched_mycfs_entity *entry = rb_entry(left_most, struct sched_mycfs_entity, run_node); // Get the entity of that child */
@@ -141,6 +152,9 @@ static struct task_struct *pick_next_task_mycfs(struct rq *rq){
 
 static void dequeue_task_mycfs(struct rq *rq, struct task_struct *p, int flags)
 {
+
+        printk("DGJ: DEQUEUE_TASK_MYCFS\n");
+
 	struct mycfs_rq *mycfs_rq;
 	struct sched_mycfs_entity *mycfs = &p->mycfs;
 
@@ -153,11 +167,15 @@ static void dequeue_task_mycfs(struct rq *rq, struct task_struct *p, int flags)
 static void
 entity_tick(struct mycfs_rq *mycfs_rq, struct sched_mycfs_entity *curr, int queued)
 {
+        printk("DGJ:ENTITY_TICK\n");
 
 }
 
 static void task_tick_mycfs(struct rq *rq, struct task_struct *curr, int queued)
 {
+
+        printk("DGJ: TASK_TICK_MYCFS\n");
+
 	struct mycfs_rq *mycfs_rq;
 	struct sched_mycfs_entity *mycfs = &curr->mycfs;
 
@@ -169,6 +187,8 @@ static void task_tick_mycfs(struct rq *rq, struct task_struct *curr, int queued)
 
 static void set_curr_task_mycfs(struct rq *rq)
 {
+      printk("DGJ: SET_CURR_TASK_MYCFS\n");
+
 /*	
 	struct sched_mycfs_entity *mycfs = &rq->curr->mycfs;
 
@@ -184,21 +204,28 @@ static void set_curr_task_mycfs(struct rq *rq)
 
 static void yield_task_mycfs(struct rq *rq)
 {
+      printk("DGJ: YIELD_TASK_MYCFS\n");
 }
 
 static void put_prev_task_mycfs(struct rq *rq, struct task_struct *prev)
 {
+      printk("DGJ: PUT_PREV_TASK_MYCFS\n");
+
 }
 
 
 static void
 check_preempt_curr_mycfs(struct rq *rq, struct task_struct *p, int flags)
 {
+      printk("DGJ: CHECK_PREEMPT_CURR_MYCFS\n");
+
 }
 
 static unsigned int
 get_rr_interval_mycfs(struct rq *rq, struct task_struct *task)
 {
+      printk("DGJ: GET_RR_INTERVAL_MYCFS\n");
+
 	return 0;
 }
 
@@ -206,13 +233,17 @@ get_rr_interval_mycfs(struct rq *rq, struct task_struct *task)
 static int
 select_task_rq_mycfs(struct task_struct *p, int sd_flag, int flags)
 {
+      printk("DGJ: SELECT_TASK_RQ_MYCFS\n");
+
         return 0; //task_cpu(p); /* stop tasks as never migrate */
 }
 #endif /* CONFIG_SMP */
 
 static void
-task_fork (struct task_struct *p)
+task_fork_mycfs (struct task_struct *p)
 {
+      printk("DGJ: TASK_FORK_MYCFS\n");
+
 }
 
 const struct sched_class mycfs_sched_class = {
@@ -227,6 +258,6 @@ const struct sched_class mycfs_sched_class = {
 	.get_rr_interval 	= get_rr_interval_mycfs,
 	.put_prev_task		= put_prev_task_mycfs,
 	.select_task_rq		= select_task_rq_mycfs,
-	.task_fork		= task_fork,
+	.task_fork		= task_fork_mycfs,
 
 };
