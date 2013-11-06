@@ -3,6 +3,7 @@
 #include "sched.h"
 
 /*
+<<<<<<< HEAD
 static void update_curr(struct mycfs_rq *mycfs_rq)
 {
 
@@ -10,9 +11,15 @@ static void update_curr(struct mycfs_rq *mycfs_rq)
 	struct sched_mycfs_entity *curr = mycfs_rq->curr;
 	
 	unsigned long delta_exec;
+=======
+   static void update_curr(struct mycfs_rq *mycfs_rq)
+   {
+   struct sched_mycfs_entity *curr = mycfs_rq->curr;
+>>>>>>> 9ca50fc61ab7e4ad3507decaefbd7e5db229b372
 
-	u64 now = mycfs_rq->rq->clock_task;
+   unsigned long delta_exec;
 
+<<<<<<< HEAD
 	delta_exec = (unsigned long)(now - curr->exec_start);
 	
 	if(!delta_exec)
@@ -46,8 +53,34 @@ static void switched_from_mycfs(struct rq *rq, struct task_struct *p)
 {
   printk("DGJ: SWITCHED FROM\n");
 }
+/*
+   u64 now = mycfs_rq->rq->clock_task;
+
+   delta_exec = (unsigned long)(now - curr->exec_start);
+
+   if(!delta_exec)
+   return;
+
+   __update_curr(mycfs_rq, curr, delta_exec);
+   curr->exec_start = now;
+
+
+
+   }
+
+   static inline void
+   __update_curr(struct mycfs_rq *mycfs_rq, struct sched_mycfs_entity *curr, unsigned long delta_exec)
+   {
+   unsigned long delta_exec_weighted;
+   mycfs_rq->exec_clock += delta_exec; //not sure why fair.c needs a special function for this
+   delta_exec_unweighted = 
+
+
+   }
+ */
+
 static inline int entity_before(struct sched_mycfs_entity *a,
-				struct sched_mycfs_entity *b)
+		struct sched_mycfs_entity *b)
 {
 
 	printk("DGJ: ENTITY BEFORE\n");
@@ -89,7 +122,7 @@ static void __enqueue_mycfs_entity(struct mycfs_rq *mycfs_rq, struct sched_mycfs
 	 * used):
 	 */
 	if (leftmost)
-		mycfs_rq->rb_leftmost = &mycfs_se->run_node;
+	mycfs_rq->rb_leftmost = &mycfs_se->run_node;
 
 	printk("DGJ: ALMOST REACHING 1 ENDOF __ENQUEUE_MYCFS_ENTITY\n");
 
@@ -103,16 +136,17 @@ static void __enqueue_mycfs_entity(struct mycfs_rq *mycfs_rq, struct sched_mycfs
 
 }
 
-static void
+	static void
 enqueue_task_mycfs(struct rq *rq, struct task_struct *p, int flags)
 {
 
 
 	struct mycfs_rq *mycfs_rq;
 	struct sched_mycfs_entity *mycfs = &p->mycfs;
-        printk("DGJ: ENQUEUE_TASK_MYCFS\n");
+	printk("DGJ: ENQUEUE_TASK_MYCFS\n");
 	if (mycfs) {
 		mycfs_rq = &rq->my_cfs;
+		mycfs_rq->nr_running = 1;
 		__enqueue_mycfs_entity(mycfs_rq, mycfs);
 	}
 }
@@ -124,8 +158,10 @@ int alloc_mycfs_sched_group(struct task_group *tg, struct task_group *parent)
 	struct mycfs_rq *mycfs_rq;
 	struct sched_mycfs_entity *mycfs_se;
 	int i;
+
 	struct rb_node **link;
-	 printk("DGJ: ALLOC_MYCFS_SCHED_GROUP\n");
+	printk("DGJ: ALLOC_MYCFS_SCHED_GROUP\n");
+
 
 	tg->mycfs_rq = kzalloc(sizeof(mycfs_rq) * nr_cpu_ids, GFP_KERNEL);
 	if (!tg->mycfs_rq)
@@ -136,22 +172,22 @@ int alloc_mycfs_sched_group(struct task_group *tg, struct task_group *parent)
 
 	for (i = 0; i < nr_cpu_ids; i++) {
 		mycfs_rq = kzalloc_node(sizeof(struct mycfs_rq),
-				      GFP_KERNEL, cpu_to_node(i));
+				GFP_KERNEL, cpu_to_node(i));
 		if (!mycfs_rq)
 			goto err;
 
 		mycfs_se = kzalloc_node(sizeof(struct sched_mycfs_entity),
-				  GFP_KERNEL, cpu_to_node(i));
+				GFP_KERNEL, cpu_to_node(i));
 		if (!mycfs_se)
 			goto err_free_rq;
 
 		mycfs_rq->root = RB_ROOT;
 
-
 		/* TEST CODE DG */
 		link = &mycfs_rq->root.rb_node;
 		printk("DGJ: ALLOC %p\n", *link);
 		
+		mycfs_rq->nr_running = 0;
 	}
 
 	return 1;
@@ -162,14 +198,18 @@ err:
 	return 0;
 }
 
-static void
+	static void
 dequeue_entity(struct mycfs_rq *mycfs_rq, struct sched_mycfs_entity *mycfs_se, int flags)
 {
-        printk("DGJ: DEQUEUE_ENTITY\n");
+	printk("DGJ: DEQUEUE_ENTITY\n");
 
 }
 
 static struct task_struct *pick_next_task_mycfs(struct rq *rq){
+	struct mycfs_rq *mycfs_rq = &rq->my_cfs; // Get the my_cfs run queue
+	struct rb_node *left_most = mycfs_rq->rb_leftmost; // Get the left most child
+	struct sched_mycfs_entity *entry = rb_entry(left_most, struct sched_mycfs_entity, run_node); // Get the entity of that child
+
 
   /* struct mycfs_rq *mycfs_rq = &rq->my_cfs; // Get the my_cfs run queue */
   /* struct rb_node *left_most = mycfs_rq->rb_leftmost; // Get the left most child */
@@ -177,27 +217,29 @@ static struct task_struct *pick_next_task_mycfs(struct rq *rq){
   
   /* return container_of(entry, struct task_struct, mycfs); // Return the task struct of the task */
 
+  if (rq->my_cfs.nr_running) { 
+    return container_of(entry, struct task_struct, mycfs); // Return the task struct of the task
+  }
   return NULL;
 }
 
 static void dequeue_task_mycfs(struct rq *rq, struct task_struct *p, int flags)
 {
-
-
 	struct mycfs_rq *mycfs_rq;
 	struct sched_mycfs_entity *mycfs = &p->mycfs;
-        printk("DGJ: DEQUEUE_TASK_MYCFS\n");
+	printk("DGJ: DEQUEUE_TASK_MYCFS\n");
 
 	if(mycfs){
-	  mycfs_rq = &rq->my_cfs;
-	  dequeue_entity(mycfs_rq, mycfs, flags);
+		mycfs_rq = &rq->my_cfs;
+		mycfs_rq->nr_running = 0;
+		dequeue_entity(mycfs_rq, mycfs, flags);
 	}
 }
 
 static void
 entity_tick(struct mycfs_rq *mycfs_rq, struct sched_mycfs_entity *curr, int queued)
 {
-        printk("DGJ:ENTITY_TICK\n");
+	printk("DGJ:ENTITY_TICK\n");
 
 }
 
@@ -207,7 +249,7 @@ static void task_tick_mycfs(struct rq *rq, struct task_struct *curr, int queued)
 
 	struct mycfs_rq *mycfs_rq;
 	struct sched_mycfs_entity *mycfs = &curr->mycfs;
-        printk("DGJ: TASK_TICK_MYCFS\n");
+	printk("DGJ: TASK_TICK_MYCFS\n");
 
 	if(mycfs){
 		mycfs_rq = &rq->my_cfs;
@@ -217,24 +259,18 @@ static void task_tick_mycfs(struct rq *rq, struct task_struct *curr, int queued)
 
 static void set_curr_task_mycfs(struct rq *rq)
 {
-      printk("DGJ: SET_CURR_TASK_MYCFS\n");
-
-/*	
-	struct sched_mycfs_entity *mycfs = &rq->curr->mycfs;
-
-	if(mycfs){
-		struct mycfs_rq = &rq->my_cfs;
-		
-
-
-	}
-
-*/
+	//	struct sched_mycfs_entity *mycfs = &rq->curr->mycfs;
+	printk("DGJ: SET_CURR_TASK_MYCFS\n");
+	/*
+	   if(mycfs){
+	   struct mycfs_rq = &rq->my_cfs;
+	   }
+	 */
 }
 
 static void yield_task_mycfs(struct rq *rq)
 {
-      printk("DGJ: YIELD_TASK_MYCFS\n");
+	printk("DGJ: YIELD_TASK_MYCFS\n");
 }
 
 static void put_prev_task_mycfs(struct rq *rq, struct task_struct *prev)
@@ -242,52 +278,67 @@ static void put_prev_task_mycfs(struct rq *rq, struct task_struct *prev)
       printk("DGJ: PUT_PREV_TASK_MYCFS\n");
 }
 
-
-static void
+	static void
 check_preempt_curr_mycfs(struct rq *rq, struct task_struct *p, int flags)
 {
-      printk("DGJ: CHECK_PREEMPT_CURR_MYCFS\n");
+	printk("DGJ: CHECK_PREEMPT_CURR_MYCFS\n");
 
 }
 
-static unsigned int
+	static unsigned int
 get_rr_interval_mycfs(struct rq *rq, struct task_struct *task)
 {
-      printk("DGJ: GET_RR_INTERVAL_MYCFS\n");
+	printk("DGJ: GET_RR_INTERVAL_MYCFS\n");
 
 	return 0;
 }
 
 #ifdef CONFIG_SMP
-static int
+	static int
 select_task_rq_mycfs(struct task_struct *p, int sd_flag, int flags)
 {
-      printk("DGJ: SELECT_TASK_RQ_MYCFS\n");
+	printk("DGJ: SELECT_TASK_RQ_MYCFS\n");
 
-        return 0; //task_cpu(p); /* stop tasks as never migrate */
+	return 0; //task_cpu(p); /* stop tasks as never migrate */
 }
 #endif /* CONFIG_SMP */
 
-static void
+	static void
 task_fork_mycfs (struct task_struct *p)
 {
-      printk("DGJ: TASK_FORK_MYCFS\n");
+	printk("DGJ: TASK_FORK_MYCFS\n");
 
 }
 
+static void switched_to_mycfs(struct rq *rq, struct task_struct *p)
+{
+	printk("DGJ: SWITCHED_TO_MYCFS\n");
+}
+
+static void switched_from_mycfs(struct rq *rq, struct task_struct *p)
+{ 
+	printk("DGJ: SWITCHED_FROM_MYCFS\n");
+}
+
+	static void
+prio_changed_mycfs(struct rq *rq, struct task_struct *p, int oldprio)
+{
+	printk("DGJ: PRIO_CHANGED_MYCFS\n");
+}
 const struct sched_class mycfs_sched_class = {
 	.next 			= &idle_sched_class,
 	.enqueue_task   	= enqueue_task_mycfs,
 	.dequeue_task   	= dequeue_task_mycfs,
 	.pick_next_task 	= pick_next_task_mycfs,
 	.task_tick   		= task_tick_mycfs,
- 	.set_curr_task 		= set_curr_task_mycfs,	
+	.set_curr_task 		= set_curr_task_mycfs,	
 	.check_preempt_curr     = check_preempt_curr_mycfs,
 	.yield_task 		= yield_task_mycfs,
 	.get_rr_interval 	= get_rr_interval_mycfs,
 	.put_prev_task		= put_prev_task_mycfs,
 	.select_task_rq		= select_task_rq_mycfs,
 	.task_fork		= task_fork_mycfs,
+
 	.prio_changed		= prio_changed_mycfs,
 	.switched_from		= switched_from_mycfs,
 	.switched_to		= switched_to_mycfs,
