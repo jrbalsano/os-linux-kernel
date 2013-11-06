@@ -325,7 +325,10 @@ struct mycfs_rq {
 	struct rb_node *rb_leftmost;
 
 	//The currently running process
-	struct sched_entity *curr;
+	struct sched_mycfs_entity *curr;
+
+	struct rq *rq;
+	u64 exec_clock;
 };
 
 #ifdef CONFIG_SMP

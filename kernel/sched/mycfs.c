@@ -2,6 +2,38 @@
 #include <linux/slab.h>
 #include "sched.h"
 
+/*
+static void update_curr(struct mycfs_rq *mycfs_rq)
+{
+	struct sched_mycfs_entity *curr = mycfs_rq->curr;
+	
+	unsigned long delta_exec;
+
+	u64 now = mycfs_rq->rq->clock_task;
+
+	delta_exec = (unsigned long)(now - curr->exec_start);
+	
+	if(!delta_exec)
+		return;
+	
+	__update_curr(mycfs_rq, curr, delta_exec);
+	curr->exec_start = now;
+
+
+	
+}
+
+static inline void
+__update_curr(struct mycfs_rq *mycfs_rq, struct sched_mycfs_entity *curr, unsigned long delta_exec)
+{
+	unsigned long delta_exec_weighted;
+	mycfs_rq->exec_clock += delta_exec; //not sure why fair.c needs a special function for this
+	delta_exec_unweighted = 
+
+
+}
+*/
+
 static inline int entity_before(struct sched_mycfs_entity *a,
 				struct sched_mycfs_entity *b)
 {
@@ -95,7 +127,12 @@ err:
 static void
 dequeue_entity(struct mycfs_rq *mycfs_rq, struct sched_mycfs_entity *mycfs_se, int flags)
 {
-//	update_curr(cfs_rq);
+	update_curr(mycfs_rq);
+
+	
+	
+
+
 }
 
 static struct task_struct *pick_next_task_mycfs(struct rq *rq){
@@ -135,7 +172,59 @@ static void task_tick_mycfs(struct rq *rq, struct task_struct *curr, int queued)
 	}
 }
 
+static void set_curr_task_mycfs(struct rq *rq)
+{
+	/*
+	struct sched_mycfs_entity *mycfs = &rq->curr->mycfs;
 
+	if(mycfs){
+		struct mycfs_rq = &rq->my_cfs;
+		
+
+
+	}
+	*/
+
+}
+
+static void yield_task_mycfs(struct rq *rq)
+{
+}
+
+static void put_prev_task_mycfs(struct rq *rq, struct task_struct *prev)
+{
+}
+
+
+static unsigned int
+get_rr_interval_mycfs(struct rq *rq, struct task_struct *task)
+{
+        return 0;
+}
+
+static void
+check_preempt_curr_mycfs(struct rq *rq, struct task_struct *p, int flags)
+{
+}
+
+static unsigned int
+get_rr_interval_mycfs(struct rq *rq, struct task_struct *task)
+{
+	return 0;
+}
+
+#ifdef CONFIG_SMP
+static int
+select_task_rq_stop(struct task_struct *p, int sd_flag, int flags)
+{
+        return 0; //task_cpu(p); /* stop tasks as never migrate */
+}
+#endif /* CONFIG_SMP */
+
+static void
+task_fork (struct task_struct *p)
+{
+}
 
 const struct sched_class mycfs_sched_class = {
 	.next 			= &idle_sched_class,
@@ -143,5 +232,12 @@ const struct sched_class mycfs_sched_class = {
 	.dequeue_task   	= dequeue_task_mycfs,
 	.pick_next_task 	= pick_next_task_mycfs,
 	.task_tick   		= task_tick_mycfs,
+ 	.set_curr_task 		= set_curr_task_mycfs,	
+	.check_preempt_curr     = check_preempt_curr_mycfs,
+	.yield_task 		= yield_task_mycfs,
+	.get_rr_interval 	= get_rr_interval_mycfs,
+	.put_prev_task		= put_prev_task_mycfs,
+	.select_task_rq		= select_task_rq_mycfs,
+	.task_fork		= task_fork,
 
 };
