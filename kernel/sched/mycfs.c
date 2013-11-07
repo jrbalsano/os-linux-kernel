@@ -98,41 +98,22 @@ enqueue_task_mycfs(struct rq *rq, struct task_struct *p, int flags)
 int alloc_mycfs_sched_group(struct task_group *tg, struct task_group *parent)
 {
 	struct mycfs_rq *mycfs_rq;
-	struct sched_mycfs_entity *mycfs_se;
+  struct rq *one_cpu_rq;
 	int i;
-
 	struct rb_node **link;
+
 	printk("DGJ[%d]: ALLOC_MYCFS_SCHED_GROUP\n", smp_processor_id());
 
-
-	tg->mycfs_rq = kzalloc(sizeof(mycfs_rq) * nr_cpu_ids, GFP_KERNEL);
-	if (!tg->mycfs_rq)
-		goto err;
-	tg->mycfs_se = kzalloc(sizeof(mycfs_se) * nr_cpu_ids, GFP_KERNEL);
-	if (!tg->mycfs_se)
-		goto err;
-
 	for (i = 0; i < nr_cpu_ids; i++) {
-		mycfs_rq = kzalloc_node(sizeof(struct mycfs_rq),
-				GFP_KERNEL, cpu_to_node(i));
-		if (!mycfs_rq)
-			goto err;
-
-		mycfs_se = kzalloc_node(sizeof(struct sched_mycfs_entity),
-				GFP_KERNEL, cpu_to_node(i));
-		if (!mycfs_se)
-			goto err_free_rq;
-
-		mycfs_rq->root = RB_ROOT;
-
-		/* TEST CODE DG */
+    one_cpu_rq = cpu_rq(i);
+    mycfs_rq = &one_cpu_rq->my_cfs;
+    mycfs_rq->root = RB_ROOT;
+		mycfs_rq->nr_running = 0;
+		mycfs_rq->rq = cpu_rq(i);
+    
+		/* TEST CODE DGJ */
 		link = &mycfs_rq->root.rb_node;
 		printk("DGJ[%d]: ALLOC %p\n", smp_processor_id(), *link);
-		
-		mycfs_rq->nr_running = 0;
-
-		//store cpu_rq in mycfs_rq
-		mycfs_rq->rq = cpu_rq(i);
 
 	}
 
