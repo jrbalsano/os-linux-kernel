@@ -155,9 +155,9 @@ static struct task_struct *pick_next_task_mycfs(struct rq *rq){
 
 	next_task = container_of(entry, struct task_struct, mycfs); // Return the task struct of the task
 
-	mycfs_rq->curr = next_task;
+	mycfs_rq->curr = entry;
 
-	return next_task 
+	return next_task;
 }
 
 static void dequeue_task_mycfs(struct rq *rq, struct task_struct *p, int flags)
