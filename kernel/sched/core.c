@@ -1786,18 +1786,18 @@ void sched_fork(struct task_struct *p)
 		 */
 		p->sched_reset_on_fork = 0;
 	}
-
-  if (current->policy == SCHED_MYCFS) {
-    p->policy = SCHED_MYCFS;
-    p->sched_class = &mycfs_sched_class;
-  }
-
-	if (!rt_prio(p->prio))
+	if (current->policy == SCHED_MYCFS) {
+	  p->policy = SCHED_MYCFS;
+	  p->sched_class = &mycfs_sched_class;
+	}
+	
+	else if (!rt_prio(p->prio))
 		p->sched_class = &fair_sched_class;
 
-	if (p->sched_class->task_fork)
-		p->sched_class->task_fork(p);
-
+	if (p->sched_class->task_fork){
+	  p->sched_class->task_fork(p);
+	  printk("DGJ[%d:%d]: FORK! current: %d, p: %d\n", smp_processor_id(), task_cpu(p), current->policy, p->policy);
+	}
 	/*
 	 * The child is not yet in the pid-hash so no cgroup attach races,
 	 * and the cgroup is pinned to this child due to cgroup_fork()
