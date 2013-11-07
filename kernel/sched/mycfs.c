@@ -10,9 +10,13 @@ static void update_curr(struct mycfs_rq *mycfs_rq, struct rq *rq)
 	   struct sched_mycfs_entity *curr = mycfs_rq->curr;
 	   u64 now = rq->clock_task;
 	   unsigned long delta_exec;
-   // I think this will cause way too many printks and watchdog will shut us down
-   // like public safety when we throw crazy ragers
-	 //  printk("DGJ: CURRENT NOW VALUE: %llu\n",now); 
+	   // I think this will cause way too many printks and watchdog will shut us down
+	   // like public safety when we throw crazy ragers
+	   if(!curr){
+	     printk("DGJ: ERROR WITH CURR\n");
+	     return;
+	   }
+	   printk("DGJ: CURRENT NOW VALUE: %llu\n",now); 
 	      
 
 	/*
@@ -20,13 +24,15 @@ static void update_curr(struct mycfs_rq *mycfs_rq, struct rq *rq)
 	 * since the last time we changed load (this cannot
 	 * overflow on 32 bits):
 	 */
-	  
 	    delta_exec = (unsigned long)(now - curr->exec_start);
+	    printk("DGJ: AFTER DELTA EXEC\n");
 	    if (!delta_exec)
 	    return;
-
-	    curr->vruntime += delta_exec / mycfs_rq->nr_running;
+	    
+	    curr->vruntime += delta_exec / (unsigned long) mycfs_rq->nr_running;
+	    printk("DGJ: AFTER VRUNTIME\n");
 	    curr->exec_start = now;  //do we actually need this here? Yupyup!
+	    printk("DGJ: AFTER curr exect_start now\n");
 	 	
 }
 

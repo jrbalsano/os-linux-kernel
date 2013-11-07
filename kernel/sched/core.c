@@ -741,7 +741,7 @@ void activate_task(struct rq *rq, struct task_struct *p, int flags)
 	if (task_contributes_to_load(p))
 		rq->nr_uninterruptible--;
         if(p->policy == SCHED_MYCFS)
-	  printk("DGJ[%d]: ENQUEUE_TASK CALLED FROM activate_task\n", smp_processor_id());
+	  printk("DGJ[%d:%d]: ENQUEUE_TASK CALLED FROM activate_task\n", smp_processor_id(), task_cpu(p));
 	enqueue_task(rq, p, flags);
 
 
