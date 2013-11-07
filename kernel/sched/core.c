@@ -1787,6 +1787,11 @@ void sched_fork(struct task_struct *p)
 		p->sched_reset_on_fork = 0;
 	}
 
+  if (current->policy == SCHED_MYCFS) {
+    p->policy = SCHED_MYCFS;
+    p->sched_class = &mycfs_sched_class;
+  }
+
 	if (!rt_prio(p->prio))
 		p->sched_class = &fair_sched_class;
 
