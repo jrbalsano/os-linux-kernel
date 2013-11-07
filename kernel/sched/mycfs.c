@@ -32,9 +32,12 @@ static void update_curr(struct mycfs_rq *mycfs_rq, struct rq *rq)
 	    
 	    //curr->vruntime += delta_exec / (unsigned long) mycfs_rq->nr_running;
 	    curr->vruntime += delta_exec;
-	    ideal_runtime = 1000000/mycfs_rq->nr_running;
-	    if(mycfs->nr_running > 1 && curr->vruntime > ideal_runtime){
+	    ideal_runtime = ((unsigned long) 10000000)/(unsigned long) mycfs_rq->nr_running;
+	    printk("delta_exec: %lu, ideal_runtime: %llu, nr_running: %llu\n",delta_exec, ideal_runtime, mycfs_rq->nr_running);
+	    if(mycfs_rq->nr_running > 1 && delta_exec > ideal_runtime){
+	      printk("DGJ: ABOUT TO RESCHEDULE\n");
 		resched_task(rq->curr);
+		return;
 	    }
 	    
 	    printk("DGJ: AFTER VRUNTIME\n");
