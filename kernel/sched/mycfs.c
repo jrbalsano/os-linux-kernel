@@ -145,15 +145,19 @@ static struct task_struct *pick_next_task_mycfs(struct rq *rq){
 	struct mycfs_rq *mycfs_rq = &rq->my_cfs; // Get the my_cfs run queue
 	struct rb_node *left_most = mycfs_rq->rb_leftmost; // Get the left most child
 	struct sched_mycfs_entity *entry;
-
+	struct task_struct *next_task;
 	if (!left_most) {
 		return NULL;
 	}
 
 	entry = rb_entry(left_most, struct sched_mycfs_entity, run_node); // Get the entity of that child
-
 	entry->exec_start = rq->clock_task;
-	return container_of(entry, struct task_struct, mycfs); // Return the task struct of the task
+
+	next_task = container_of(entry, struct task_struct, mycfs); // Return the task struct of the task
+
+	mycfs_rq->curr = next_task;
+
+	return next_task 
 }
 
 static void dequeue_task_mycfs(struct rq *rq, struct task_struct *p, int flags)
