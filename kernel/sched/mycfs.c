@@ -3,24 +3,29 @@
 #include <linux/smp.h>
 #include "sched.h"
 
-static void update_curr(struct mycfs_rq *mycfs_rq)
+static void update_curr(struct mycfs_rq *mycfs_rq, struct rq *rq)
 {
+	
+/* //cannot implement this until set_curr_mycfs has been implemented so that ->curr is not null
 	struct sched_mycfs_entity *curr = mycfs_rq->curr;
-	u64 now = mycfs_rq->rq->clock_task;
+	u64 now = rq->clock_task;
 	unsigned long delta_exec;
-
+	printk("DGJ: CURRENT NOW VALUE: %llu\n",now);
+  */     
+ 
 	 /*
           * Get the amount of time the current task was running
           * since the last time we changed load (this cannot
           * overflow on 32 bits):
           */
-        delta_exec = (unsigned long)(now - curr->exec_start);
+/*  
+      delta_exec = (unsigned long)(now - curr->exec_start);
         if (!delta_exec)
 	        return;
 
 	curr->vruntime += delta_exec;
 	curr->exec_start = now;  //do we actually need this here?
-
+*/	
 }
 
 static inline int entity_before(struct sched_mycfs_entity *a,
@@ -133,7 +138,9 @@ int alloc_mycfs_sched_group(struct task_group *tg, struct task_group *parent)
 
 		//store cpu_rq in mycfs_rq
 		mycfs_rq->rq = cpu_rq(i);
-
+		tg->mycfs_rq[i] = mycfs_rq;
+		tg->mycfs_se[i] = mycfs_se;
+		mycfs_se->mycfs_rq = &cpu_rq(i)->my_cfs;
 	}
 
 	return 1;
@@ -164,13 +171,14 @@ static struct task_struct *pick_next_task_mycfs(struct rq *rq){
 	struct mycfs_rq *mycfs_rq = &rq->my_cfs; // Get the my_cfs run queue
 	struct rb_node *left_most = mycfs_rq->rb_leftmost; // Get the left most child
 	struct sched_mycfs_entity *entry;
+
 	if (!left_most) {
 		return NULL;
 	}
 
 	entry = rb_entry(left_most, struct sched_mycfs_entity, run_node); // Get the entity of that child
 	
-	entry->exec_start = mycfs_rq->rq->clock_task;
+	entry->exec_start = rq->clock_task;
 	return container_of(entry, struct task_struct, mycfs); // Return the task struct of the task
 }
 
@@ -188,9 +196,9 @@ static void dequeue_task_mycfs(struct rq *rq, struct task_struct *p, int flags)
 }
 
 static void
-entity_tick(struct mycfs_rq *mycfs_rq, struct sched_mycfs_entity *curr, int queued)
+entity_tick(struct mycfs_rq *mycfs_rq, struct sched_mycfs_entity *curr, int queued, struct rq *rq)
 {
-  update_curr(mycfs_rq);
+  update_curr(mycfs_rq, rq);
   printk("DGJ[%d]:ENTITY_TICK\n", smp_processor_id());
 
 }
@@ -205,7 +213,7 @@ static void task_tick_mycfs(struct rq *rq, struct task_struct *curr, int queued)
 
 	if(mycfs){
 		mycfs_rq = &rq->my_cfs;
-		entity_tick(mycfs_rq, mycfs, queued);
+		entity_tick(mycfs_rq, mycfs, queued, rq);
 	}
 }
 
