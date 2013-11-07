@@ -6,26 +6,28 @@
 static void update_curr(struct mycfs_rq *mycfs_rq, struct rq *rq)
 {
 
-	/* //cannot implement this until set_curr_mycfs has been implemented so that ->curr is not null
+	 //cannot implement this until set_curr_mycfs has been implemented so that ->curr is not null
 	   struct sched_mycfs_entity *curr = mycfs_rq->curr;
 	   u64 now = rq->clock_task;
 	   unsigned long delta_exec;
-	   printk("DGJ: CURRENT NOW VALUE: %llu\n",now);
-	 */     
+   // I think this will cause way too many printks and watchdog will shut us down
+   // like public safety when we throw crazy ragers
+	 //  printk("DGJ: CURRENT NOW VALUE: %llu\n",now); 
+	      
 
 	/*
 	 * Get the amount of time the current task was running
 	 * since the last time we changed load (this cannot
 	 * overflow on 32 bits):
 	 */
-	/*  
+	  
 	    delta_exec = (unsigned long)(now - curr->exec_start);
 	    if (!delta_exec)
 	    return;
 
-	    curr->vruntime += delta_exec;
-	    curr->exec_start = now;  //do we actually need this here?
-	 */	
+	    curr->vruntime += delta_exec / mycfs_rq->nr_running;
+	    curr->exec_start = now;  //do we actually need this here? Yupyup!
+	 	
 }
 
 static inline int entity_before(struct sched_mycfs_entity *a,
