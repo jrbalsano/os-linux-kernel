@@ -10,6 +10,7 @@ static void update_curr(struct mycfs_rq *mycfs_rq, struct rq *rq)
 	   struct sched_mycfs_entity *curr = mycfs_rq->curr;
 	   u64 now = rq->clock_task;
 	   unsigned long delta_exec;
+	   u64 ideal_runtime;
 	   // I think this will cause way too many printks and watchdog will shut us down
 	   // like public safety when we throw crazy ragers
 	   if(!curr){
@@ -29,7 +30,13 @@ static void update_curr(struct mycfs_rq *mycfs_rq, struct rq *rq)
 	    if (!delta_exec)
 	    return;
 	    
-	    curr->vruntime += delta_exec / (unsigned long) mycfs_rq->nr_running;
+	    //curr->vruntime += delta_exec / (unsigned long) mycfs_rq->nr_running;
+	    curr->vruntime += delta_exec;
+	    ideal_runtime = 1000000/mycfs_rq->nr_running;
+	    if(mycfs->nr_running > 1 && curr->vruntime > ideal_runtime){
+		resched_task(rq->curr);
+	    }
+	    
 	    printk("DGJ: AFTER VRUNTIME\n");
 	    curr->exec_start = now;  //do we actually need this here? Yupyup!
 	    printk("DGJ: AFTER curr exect_start now\n");
@@ -185,6 +192,7 @@ static void dequeue_task_mycfs(struct rq *rq, struct task_struct *p, int flags)
 entity_tick(struct mycfs_rq *mycfs_rq, struct sched_mycfs_entity *curr, int queued, struct rq *rq)
 {
 	update_curr(mycfs_rq, rq);
+
 	printk("DGJ[%d]:ENTITY_TICK\n", smp_processor_id());
 
 }
