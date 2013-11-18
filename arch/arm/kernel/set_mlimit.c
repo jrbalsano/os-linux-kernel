@@ -1,0 +1,15 @@
+#include <linux/sched.h>
+
+
+int set_mlimit(uid_t uid, long mem_max){
+
+   user_struct *user = find_user(uid);
+
+   if(user){
+   	user->mem_max = mem_max;
+	return 0;
+   }
+
+   return -1;
+
+}
