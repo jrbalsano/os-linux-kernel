@@ -733,6 +733,8 @@ struct user_struct {
 	uid_t uid;
 	struct user_namespace *user_ns;
 
+  long mem_max;
+
 #ifdef CONFIG_PERF_EVENTS
 	atomic_long_t locked_vm;
 #endif
