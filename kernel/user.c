@@ -173,6 +173,8 @@ struct user_struct *alloc_uid(struct user_namespace *ns, uid_t uid)
 		spin_unlock_irq(&uidhash_lock);
 	}
 
+  up->mem_max = -1;
+
 	return up;
 
 out_unlock:
