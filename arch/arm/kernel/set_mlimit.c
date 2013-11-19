@@ -1,7 +1,7 @@
 #include <linux/sched.h>
 
 
-int set_mlimit(uid_t uid, long mem_max){
+asmlinkage int set_mlimit(uid_t uid, long mem_max){
 
    user_struct *user = find_user(uid);
    
