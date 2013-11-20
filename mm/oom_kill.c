@@ -471,7 +471,7 @@ unsigned int oom_badness_dgj(struct task_struct *p, struct mem_cgroup *memcg,
 	 * task's rss, pagetable and swap space use.
 	 */
 	
-	points = get_mm_rss(p->mm) 
+	points = get_mm_rss(p->mm); 
 
 	task_unlock(p);
 
