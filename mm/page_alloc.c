@@ -2542,6 +2542,9 @@ static long __get_available_quota_memory(void) {
   long total = 0;
   struct task_struct *p;
   struct user_struct *cur_user_struct = find_user(cur_user);
+
+  if (cur_user_struct->mem_max == -1) { return -1 };
+
   for_each_process(p) {
     if (p->loginuid == cur_user) {
       total += get_mm_rss(p->mm);
@@ -2585,7 +2588,7 @@ __alloc_pages_nodemask(gfp_t gfp_mask, unsigned int order,
 		return NULL;
 
   /* Make sure the current user won't go over quota */
-  if (available < about_to_alloc) {
+  if (available >= 0 && available < about_to_alloc) {
     // call our oom stuff here
   }
   
