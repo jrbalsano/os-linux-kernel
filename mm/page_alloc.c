@@ -2113,6 +2113,7 @@ __alloc_pages_may_oom(gfp_t gfp_mask, unsigned int order,
 		if (gfp_mask & __GFP_THISNODE)
 			goto out;
 	}
+
 	/* Exhausted what can be done so it's blamo time */
 	out_of_memory(zonelist, gfp_mask, order, nodemask, false);
 
@@ -2536,6 +2537,19 @@ got_pg:
 
 }
 
+static long __get_available_quota_memory(void) {
+  uid_t cur_user = current->loginuid;
+  long total = 0;
+  struct user_struct *cur_user_struct = find_user(cur_user);
+  for_each_process(p) {
+    if (p->loginuid == cur_user) {
+      total += get_mm_rss(p->mm);
+    }
+  }
+
+  return cur_user_struct->mem_max - (PAGE_SIZE * total);
+}
+
 /*
  * This is the 'heart' of the zoned buddy allocator.
  */
@@ -2566,6 +2580,14 @@ __alloc_pages_nodemask(gfp_t gfp_mask, unsigned int order,
 	 */
 	if (unlikely(!zonelist->_zonerefs->zone))
 		return NULL;
+
+  /* Make sure the current user won't go over quota */
+  long available = __get_available_quota_memory();
+  long about_to_alloc = (1 << order) * PAGE_SIZE;
+  if (available < about_to_alloc) {
+    // call our oom stuff here
+  }
+  
 
 retry_cpuset:
 	cpuset_mems_cookie = get_mems_allowed();
