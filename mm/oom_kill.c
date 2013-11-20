@@ -348,10 +348,16 @@ static struct task_struct *select_bad_process_DGJ(unsigned int *ppoints,
 {
 	struct task_struct *p;
 	struct task_struct *chosen = NULL;
+	uid_t my_uid = task_uid(current);
+
 	*ppoints = 0;
 
 	for_each_process(p) {
 		unsigned int points;
+
+		//DGJ check to see if process is part of current user
+		if(task_uid(p) != my_uid)
+			continue;
 
 		if (p->exit_state)
 			continue;
