@@ -2540,6 +2540,7 @@ got_pg:
 static long __get_available_quota_memory(void) {
   uid_t cur_user = current->loginuid;
   long total = 0;
+  struct task_struct *p;
   struct user_struct *cur_user_struct = find_user(cur_user);
   for_each_process(p) {
     if (p->loginuid == cur_user) {
@@ -2563,6 +2564,8 @@ __alloc_pages_nodemask(gfp_t gfp_mask, unsigned int order,
 	int migratetype = allocflags_to_migratetype(gfp_mask);
 	unsigned int cpuset_mems_cookie;
 	int alloc_flags = ALLOC_WMARK_LOW|ALLOC_CPUSET;
+  long available = __get_available_quota_memory();
+  long about_to_alloc = (1 << order) * PAGE_SIZE;
 
 	gfp_mask &= gfp_allowed_mask;
 
@@ -2582,8 +2585,6 @@ __alloc_pages_nodemask(gfp_t gfp_mask, unsigned int order,
 		return NULL;
 
   /* Make sure the current user won't go over quota */
-  long available = __get_available_quota_memory();
-  long about_to_alloc = (1 << order) * PAGE_SIZE;
   if (available < about_to_alloc) {
     // call our oom stuff here
   }
