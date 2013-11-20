@@ -639,6 +639,99 @@ static void oom_kill_process(struct task_struct *p, gfp_t gfp_mask, int order,
 	do_send_sig_info(SIGKILL, SEND_SIG_FORCED, victim, true);
 }
 #undef K
+#define K(x) ((x) << (PAGE_SHIFT-10))
+static void oom_kill_process_DGJ(struct task_struct *p, gfp_t gfp_mask, int order,
+			     unsigned int points, unsigned long totalpages,
+			     struct mem_cgroup *memcg, nodemask_t *nodemask,
+			     const char *message)
+{
+	struct task_struct *victim = p;
+	struct task_struct *child;
+	struct task_struct *t = p;
+	struct mm_struct *mm;
+	unsigned int victim_points = 0;
+	static DEFINE_RATELIMIT_STATE(oom_rs, DEFAULT_RATELIMIT_INTERVAL,
+					      DEFAULT_RATELIMIT_BURST);
+
+	/*
+	 * If the task is already exiting, don't alarm the sysadmin or kill
+	 * its children or threads, just set TIF_MEMDIE so it can die quickly
+	 */
+	if (p->flags & PF_EXITING) {
+		set_tsk_thread_flag(p, TIF_MEMDIE);
+		return;
+	}
+
+	if (__ratelimit(&oom_rs))
+		dump_header(p, gfp_mask, order, memcg, nodemask);
+
+	task_lock(p);
+	pr_err("%s: Kill process %d (%s) score %d or sacrifice child\n",
+		message, task_pid_nr(p), p->comm, points);
+	task_unlock(p);
+
+	/*
+	 * If any of p's children has a different mm and is eligible for kill,
+	 * the one with the highest oom_badness() score is sacrificed for its
+	 * parent.  This attempts to lose the minimal amount of work done while
+	 * still freeing memory.
+	 */
+	do {
+		list_for_each_entry(child, &t->children, sibling) {
+			unsigned int child_points;
+
+			if (child->mm == p->mm)
+				continue;
+			/*
+			 * oom_badness() returns 0 if the thread is unkillable
+			 */
+			child_points = oom_badness_DGJ(child, memcg, nodemask,
+								totalpages);
+			if (child_points > victim_points) {
+				victim = child;
+				victim_points = child_points;
+			}
+		}
+	} while_each_thread(p, t);
+
+	victim = find_lock_task_mm(victim);
+	if (!victim)
+		return;
+
+	/* mm cannot safely be dereferenced after task_unlock(victim) */
+	mm = victim->mm;
+	pr_err("Killed process %d (%s) total-vm:%lukB, anon-rss:%lukB, file-rss:%lukB\n",
+		task_pid_nr(victim), victim->comm, K(victim->mm->total_vm),
+		K(get_mm_counter(victim->mm, MM_ANONPAGES)),
+		K(get_mm_counter(victim->mm, MM_FILEPAGES)));
+	task_unlock(victim);
+
+	/*
+	 * Kill all user processes sharing victim->mm in other thread groups, if
+	 * any.  They don't get access to memory reserves, though, to avoid
+	 * depletion of all memory.  This prevents mm->mmap_sem livelock when an
+	 * oom killed thread cannot exit because it requires the semaphore and
+	 * its contended by another thread trying to allocate memory itself.
+	 * That thread will now get access to memory reserves since it has a
+	 * pending fatal signal.
+	 */
+	for_each_process(p)
+		if (p->mm == mm && !same_thread_group(p, victim) &&
+		    !(p->flags & PF_KTHREAD)) {
+			if (p->signal->oom_score_adj == OOM_SCORE_ADJ_MIN)
+				continue;
+
+			task_lock(p);	/* Protect ->comm from prctl() */
+			pr_err("Kill process %d (%s) sharing same memory\n",
+				task_pid_nr(p), p->comm);
+			task_unlock(p);
+			do_send_sig_info(SIGKILL, SEND_SIG_FORCED, p, true);
+		}
+
+	set_tsk_thread_flag(victim, TIF_MEMDIE);
+	do_send_sig_info(SIGKILL, SEND_SIG_FORCED, victim, true);
+}
+#undef K
 
 /*
  * Determines whether the kernel must panic because of the panic_on_oom sysctl.
@@ -846,6 +939,8 @@ void out_of_memory(struct zonelist *zonelist, gfp_t gfp_mask,
 	if (sysctl_oom_kill_allocating_task &&
 	    !oom_unkillable_task(current, NULL, nodemask) &&
 	    current->mm) {
+	  
+
 		oom_kill_process(current, gfp_mask, order, 0, totalpages, NULL,
 				 nodemask,
 				 "Out of memory (oom_kill_allocating_task)");
@@ -866,6 +961,69 @@ void out_of_memory(struct zonelist *zonelist, gfp_t gfp_mask,
 		killed = 1;
 	}
 out:
+	read_unlock(&tasklist_lock);
+
+	/*
+	 * Give "p" a good chance of killing itself before we
+	 * retry to allocate memory unless "p" is current
+	 */
+	if (killed && !test_thread_flag(TIF_MEMDIE))
+		schedule_timeout_uninterruptible(1);
+}
+/*
+ * Our version of out_of_memory which will call our own version of the
+ * necessary functions
+ */
+void out_of_memory_DGJ(struct zonelist *zonelist, gfp_t gfp_mask,
+		int order, nodemask_t *nodemask, bool force_kill)
+{
+	const nodemask_t *mpol_mask;
+	struct task_struct *p;
+	unsigned long totalpages;
+	unsigned long freed = 0;
+	unsigned int points;
+	enum oom_constraint constraint = CONSTRAINT_NONE;
+	int killed = 0;
+
+	blocking_notifier_call_chain(&oom_notify_list, 0, &freed);
+	if (freed > 0)
+		/* Got some memory back in the last second. */
+		return;
+
+	/*
+	 * If current has a pending SIGKILL, then automatically select it.  The
+	 * goal is to allow it to allocate so that it may quickly exit and free
+	 * its memory.
+	 */
+	if (fatal_signal_pending(current)) {
+		set_thread_flag(TIF_MEMDIE);
+		return;
+	}
+
+	/*
+	 * Check if there were limitations on the allocation (only relevant for
+	 * NUMA) that may require different handling.
+	 */
+	constraint = constrained_alloc(zonelist, gfp_mask, nodemask,
+						&totalpages);
+	mpol_mask = (constraint == CONSTRAINT_MEMORY_POLICY) ? nodemask : NULL;
+	check_panic_on_oom(constraint, gfp_mask, order, mpol_mask);
+
+	read_lock(&tasklist_lock);
+
+	p = select_bad_process_DGJ(&points, totalpages, NULL, mpol_mask,
+			       force_kill);
+	/* Found nothing?!?! Either we hang forever, or we panic. */
+	if (!p) {
+		dump_header(NULL, gfp_mask, order, NULL, mpol_mask);
+		read_unlock(&tasklist_lock);
+		panic("Out of memory and no killable processes...\n");
+	}
+	if (PTR_ERR(p) != -1UL) {
+		oom_kill_process_DGJ(p, gfp_mask, order, points, totalpages, NULL,
+				 nodemask, "Out of memory");
+		killed = 1;
+	}
 	read_unlock(&tasklist_lock);
 
 	/*
