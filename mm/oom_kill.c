@@ -308,11 +308,14 @@ static enum oom_constraint constrained_alloc(struct zonelist *zonelist,
  *
  * (not docbooked, we don't want this one cluttering up the manual)
  */
-static struct task_struct *select_bad_process(unsigned int *ppoints,
+
+
+/******DGJ's version of select_bad_process*******/
+static struct task_struct *select_bad_process_DGJ(unsigned int *ppoints,
 		unsigned long totalpages, struct mem_cgroup *memcg,
 		const nodemask_t *nodemask, bool force_kill)
 {
-	struct task_struct *g, *p;
+	struct task_struct *p;
 	struct task_struct *chosen = NULL;
 	*ppoints = 0;
 
@@ -366,7 +369,7 @@ static struct task_struct *select_bad_process(unsigned int *ppoints,
 			}
 		}
 
-		points = oom_badness(p, memcg, nodemask, totalpages);
+		points = oom_badness_DGJ(p, memcg, nodemask, totalpages);
 		if (points > *ppoints) {
 			chosen = p;
 			*ppoints = points;
@@ -378,8 +381,7 @@ static struct task_struct *select_bad_process(unsigned int *ppoints,
 
 
 
-/******DGJ's version of select_bad_process*******/
-static struct task_struct *select_bad_process_dgj(unsigned int *ppoints,
+static struct task_struct *select_bad_process(unsigned int *ppoints,
 		unsigned long totalpages, struct mem_cgroup *memcg,
 		const nodemask_t *nodemask, bool force_kill)
 {
@@ -437,7 +439,7 @@ static struct task_struct *select_bad_process_dgj(unsigned int *ppoints,
 			}
 		}
 
-		points = oom_badness_dgj(p, memcg, nodemask, totalpages);
+		points = oom_badness(p, memcg, nodemask, totalpages);
 		if (points > *ppoints) {
 			chosen = p;
 			*ppoints = points;
@@ -448,7 +450,7 @@ static struct task_struct *select_bad_process_dgj(unsigned int *ppoints,
 }
 
 /***DGJ's badness calculator****/
-unsigned int oom_badness_dgj(struct task_struct *p, struct mem_cgroup *memcg,
+unsigned int oom_badness_DGJ(struct task_struct *p, struct mem_cgroup *memcg,
 		      const nodemask_t *nodemask, unsigned long totalpages)
 {
 	long points;
