@@ -348,8 +348,9 @@ static struct task_struct *select_bad_process_DGJ(unsigned int *ppoints,
 {
 	struct task_struct *p;
 	struct task_struct *chosen = NULL;
-	*ppoints = 0;
 	uid_t my_uid = task_uid(current);
+
+	*ppoints = 0;
 
 	for_each_process(p) {
 		unsigned int points;
