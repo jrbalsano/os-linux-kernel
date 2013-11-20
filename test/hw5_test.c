@@ -23,8 +23,9 @@ int main(int argc, char **argv) {
   int limit = atoi(argv[2]);
   pid_t *pids = (pid_t*)malloc((argc-3)*sizeof(pid_t));
   syscall(378, pwd_struct->pw_uid, limit);
-  /*
+  
   int i, mem;
+  setuid(pwd_struct->pw_uid);
   test1();
   for (i = 3; i < argc; ++i) {
      mem = atoi(argv[i]);
@@ -44,7 +45,7 @@ int main(int argc, char **argv) {
 
   for (i = 0; i < argc-3; ++i) {
     waitpid(pids[i], NULL, 0);
-  }*/
+  }
 
   return 0;
 }

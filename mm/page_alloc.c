@@ -2543,27 +2543,22 @@ static long __get_available_quota_memory(void) {
   struct task_struct *p;
   struct user_struct *cur_user_struct;
 
-  if (current == null) {
-    printk("No current\n");
-    return -1;
-  }
-
-  cur_user = current->loginuid;
+  cur_user = current_uid();
   cur_user_struct = find_user(cur_user);
-
   if (cur_user_struct == NULL) {
-    printk("No current user struct\n");
     return -1;
   }
-
-  if (cur_user_struct->mem_max == -1) { return -1; };
-
-  for_each_process(p) {
-    if (p->loginuid == cur_user) {
-      total += get_mm_rss(p->mm);
-    }
+  if (cur_user_struct->mem_max == -1) { 
+    return -1; 
   }
-
+  printk("USERID after checks: %d\n", cur_user);
+  printk("MEM_MAX: %ld\n", cur_user_struct->mem_max);
+  for_each_process(p) {
+    if (p->mm && task_uid(p) == cur_user) {
+       total += get_mm_rss(p->mm);
+     } 
+  }
+  printk("CALCULATED USAGE: %ld\n", PAGE_SIZE * total);
   return cur_user_struct->mem_max - (PAGE_SIZE * total);
 }
 
@@ -2580,13 +2575,18 @@ __alloc_pages_nodemask(gfp_t gfp_mask, unsigned int order,
 	int migratetype = allocflags_to_migratetype(gfp_mask);
 	unsigned int cpuset_mems_cookie;
 	int alloc_flags = ALLOC_WMARK_LOW|ALLOC_CPUSET;
-  long available = __get_available_quota_memory();
-  long about_to_alloc = (1 << order) * PAGE_SIZE;
-
+	long available;
+	long about_to_alloc = (1 << order) * PAGE_SIZE;
+	/* if(available != -1){ */
+	/*   printk("WE PASSED GET AVAILABLE QUOTA"); */
+	/* } */
 	gfp_mask &= gfp_allowed_mask;
 
 	lockdep_trace_alloc(gfp_mask);
 
+	available  = __get_available_quota_memory();
+
+	clear_zonelist_oom(zonelist, gfp_mask);
 	might_sleep_if(gfp_mask & __GFP_WAIT);
 
 	if (should_fail_alloc_page(gfp_mask, order))
@@ -2601,8 +2601,9 @@ __alloc_pages_nodemask(gfp_t gfp_mask, unsigned int order,
 		return NULL;
 
   /* Make sure the current user won't go over quota */
-  if (available >= 0 && available < about_to_alloc) {
-    // call our oom stuff here
+  if (available != -1 && available < about_to_alloc) {
+    printk("AVAILABLE: %ld\nABOUT TO ALLOC: %ld\n", available, about_to_alloc);
+    out_of_memory_DGJ(zonelist, gfp_mask, order, nodemask, false);
   }
   
 

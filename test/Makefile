@@ -4,10 +4,10 @@ APP_NAME := $(LOCAL_MODULE)
 APP_ARCH := armeabi
 
 NDK_FILE := android-ndk-r9-linux-x86_64.tar.bz2
-NDK_PATH_DEFAULT := android-ndk-r9
+NDK_PATH_DEFAULT := ~/Development/android-ndk-r9
 NDK_BUILD_DEFAULT_PATH := $(NDK_PATH_DEFAULT)/ndk-build
 SDK_FILE := android-sdk_r22.0.5-linux.tgz
-SDK_PATH := android-sdk-linux
+SDK_PATH := ~/Development/android-sdk-linux
 ADB_DEFAULT_PATH := $(SDK_PATH)/platform-tools/adb
 
 .PHONY: all build test uninstall ndk clean sdk
@@ -68,7 +68,7 @@ paths.mk:
 
 build:
 	@echo === Building application ===
-	@$(NDK_BUILD) NDK_PROJECT_PATH=. APP_BUILD_SCRIPT=Android.mk; \
+	@$(NDK_BUILD_DEFAULT_PATH) NDK_PROJECT_PATH=. APP_BUILD_SCRIPT=Android.mk; \
 
 test: build
 	@echo === Pushing application to the device ===

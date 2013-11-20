@@ -59,6 +59,7 @@ struct user_struct root_user = {
 	.sigpending	= ATOMIC_INIT(0),
 	.locked_shm     = 0,
 	.user_ns	= &init_user_ns,
+	.mem_max        = -1
 };
 
 /*
@@ -170,10 +171,10 @@ struct user_struct *alloc_uid(struct user_namespace *ns, uid_t uid)
 			uid_hash_insert(new, hashent);
 			up = new;
 		}
+		up->mem_max = -1;
 		spin_unlock_irq(&uidhash_lock);
 	}
 
-  up->mem_max = -1;
 
 	return up;
 

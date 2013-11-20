@@ -307,7 +307,7 @@ unsigned int oom_badness_DGJ(struct task_struct *p, struct mem_cgroup *memcg,
 		      const nodemask_t *nodemask, unsigned long totalpages)
 {
 	long points;
-
+	printk("OOM BADNESS CALLED\n");
 	if (oom_unkillable_task(p, memcg, nodemask))
 		return 0;
 
@@ -351,7 +351,7 @@ static struct task_struct *select_bad_process_DGJ(unsigned int *ppoints,
 	uid_t my_uid = task_uid(current);
 
 	*ppoints = 0;
-
+	printk("SELECT BAD PROCESS CALLED\n");
 	for_each_process(p) {
 		unsigned int points;
 
@@ -658,7 +658,7 @@ static void oom_kill_process_DGJ(struct task_struct *p, gfp_t gfp_mask, int orde
 	unsigned int victim_points = 0;
 	static DEFINE_RATELIMIT_STATE(oom_rs, DEFAULT_RATELIMIT_INTERVAL,
 					      DEFAULT_RATELIMIT_BURST);
-
+	printk("OOM KILL PROCESS CALLED\n");
 	/*
 	 * If the task is already exiting, don't alarm the sysadmin or kill
 	 * its children or threads, just set TIF_MEMDIE so it can die quickly
@@ -990,7 +990,7 @@ void out_of_memory_DGJ(struct zonelist *zonelist, gfp_t gfp_mask,
 	unsigned int points;
 	enum oom_constraint constraint = CONSTRAINT_NONE;
 	int killed = 0;
-
+	printk("OUT OF MEMORY CALLED\n");
 	blocking_notifier_call_chain(&oom_notify_list, 0, &freed);
 	if (freed > 0)
 		/* Got some memory back in the last second. */
