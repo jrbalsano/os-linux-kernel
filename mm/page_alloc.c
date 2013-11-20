@@ -2538,12 +2538,25 @@ got_pg:
 }
 
 static long __get_available_quota_memory(void) {
-  uid_t cur_user = current->loginuid;
+  uid_t cur_user;
   long total = 0;
   struct task_struct *p;
-  struct user_struct *cur_user_struct = find_user(cur_user);
+  struct user_struct *cur_user_struct;
 
-  if (cur_user_struct->mem_max == -1) { return -1 };
+  if (current == null) {
+    printk("No current\n");
+    return -1;
+  }
+
+  cur_user = current->loginuid;
+  cur_user_struct = find_user(cur_user);
+
+  if (cur_user_struct == NULL) {
+    printk("No current user struct\n");
+    return -1;
+  }
+
+  if (cur_user_struct->mem_max == -1) { return -1; };
 
   for_each_process(p) {
     if (p->loginuid == cur_user) {
