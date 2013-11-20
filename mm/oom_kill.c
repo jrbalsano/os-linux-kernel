@@ -302,17 +302,51 @@ static enum oom_constraint constrained_alloc(struct zonelist *zonelist,
 }
 #endif
 
+/***DGJ's badness calculator****/
+unsigned int oom_badness_DGJ(struct task_struct *p, struct mem_cgroup *memcg,
+		      const nodemask_t *nodemask, unsigned long totalpages)
+{
+	long points;
+
+	if (oom_unkillable_task(p, memcg, nodemask))
+		return 0;
+
+	p = find_lock_task_mm(p);
+	if (!p)
+		return 0;
+
+	if (p->signal->oom_score_adj == OOM_SCORE_ADJ_MIN) {
+		task_unlock(p);
+		return 0;
+	}
+
+
+	/*
+	 * The baseline for the badness score is the proportion of RAM that each
+	 * task's rss, pagetable and swap space use.
+	 */
+	
+	points = get_mm_rss(p->mm); 
+
+	task_unlock(p);
+
+	return points;
+}
+
 /*
  * Simple selection loop. We chose the process with the highest
  * number of 'points'. We expect the caller will lock the tasklist.
  *
  * (not docbooked, we don't want this one cluttering up the manual)
  */
-static struct task_struct *select_bad_process(unsigned int *ppoints,
+
+
+/******DGJ's version of select_bad_process*******/
+static struct task_struct *select_bad_process_DGJ(unsigned int *ppoints,
 		unsigned long totalpages, struct mem_cgroup *memcg,
 		const nodemask_t *nodemask, bool force_kill)
 {
-	struct task_struct *g, *p;
+	struct task_struct *p;
 	struct task_struct *chosen = NULL;
 	*ppoints = 0;
 
@@ -366,7 +400,7 @@ static struct task_struct *select_bad_process(unsigned int *ppoints,
 			}
 		}
 
-		points = oom_badness(p, memcg, nodemask, totalpages);
+		points = oom_badness_DGJ(p, memcg, nodemask, totalpages);
 		if (points > *ppoints) {
 			chosen = p;
 			*ppoints = points;
@@ -378,8 +412,7 @@ static struct task_struct *select_bad_process(unsigned int *ppoints,
 
 
 
-/******DGJ's version of select_bad_process*******/
-static struct task_struct *select_bad_process_dgj(unsigned int *ppoints,
+static struct task_struct *select_bad_process(unsigned int *ppoints,
 		unsigned long totalpages, struct mem_cgroup *memcg,
 		const nodemask_t *nodemask, bool force_kill)
 {
@@ -437,7 +470,7 @@ static struct task_struct *select_bad_process_dgj(unsigned int *ppoints,
 			}
 		}
 
-		points = oom_badness_dgj(p, memcg, nodemask, totalpages);
+		points = oom_badness(p, memcg, nodemask, totalpages);
 		if (points > *ppoints) {
 			chosen = p;
 			*ppoints = points;
@@ -447,36 +480,7 @@ static struct task_struct *select_bad_process_dgj(unsigned int *ppoints,
 	return chosen;
 }
 
-/***DGJ's badness calculator****/
-unsigned int oom_badness_dgj(struct task_struct *p, struct mem_cgroup *memcg,
-		      const nodemask_t *nodemask, unsigned long totalpages)
-{
-	long points;
 
-	if (oom_unkillable_task(p, memcg, nodemask))
-		return 0;
-
-	p = find_lock_task_mm(p);
-	if (!p)
-		return 0;
-
-	if (p->signal->oom_score_adj == OOM_SCORE_ADJ_MIN) {
-		task_unlock(p);
-		return 0;
-	}
-
-
-	/*
-	 * The baseline for the badness score is the proportion of RAM that each
-	 * task's rss, pagetable and swap space use.
-	 */
-	
-	points = get_mm_rss(p->mm) 
-
-	task_unlock(p);
-
-	return points;
-}
 
 
 
