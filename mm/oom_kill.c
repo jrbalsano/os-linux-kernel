@@ -316,7 +316,7 @@ static struct task_struct *select_bad_process(unsigned int *ppoints,
 	struct task_struct *chosen = NULL;
 	*ppoints = 0;
 
-	do_each_thread(g, p) {
+	for_each_process(p) {
 		unsigned int points;
 
 		if (p->exit_state)
@@ -371,10 +371,117 @@ static struct task_struct *select_bad_process(unsigned int *ppoints,
 			chosen = p;
 			*ppoints = points;
 		}
+	}
+
+	return chosen;
+}
+
+
+
+/******DGJ's version of select_bad_process*******/
+static struct task_struct *select_bad_process_dgj(unsigned int *ppoints,
+		unsigned long totalpages, struct mem_cgroup *memcg,
+		const nodemask_t *nodemask, bool force_kill)
+{
+	struct task_struct *g, *p;
+	struct task_struct *chosen = NULL;
+	*ppoints = 0;
+
+	do_each_thread(g, p) {
+		unsigned int points;
+
+		if (p->exit_state)
+			continue;
+		if (oom_unkillable_task(p, memcg, nodemask))
+			continue;
+
+		/*
+		 * This task already has access to memory reserves and is
+		 * being killed. Don't allow any other task access to the
+		 * memory reserve.
+		 *
+		 * Note: this may have a chance of deadlock if it gets
+		 * blocked waiting for another task which itself is waiting
+		 * for memory. Is there a better alternative?
+		 */
+		if (test_tsk_thread_flag(p, TIF_MEMDIE)) {
+			if (unlikely(frozen(p)))
+				__thaw_task(p);
+			if (!force_kill)
+				return ERR_PTR(-1UL);
+		}
+		if (!p->mm)
+			continue;
+
+		if (p->flags & PF_EXITING) {
+			/*
+			 * If p is the current task and is in the process of
+			 * releasing memory, we allow the "kill" to set
+			 * TIF_MEMDIE, which will allow it to gain access to
+			 * memory reserves.  Otherwise, it may stall forever.
+			 *
+			 * The loop isn't broken here, however, in case other
+			 * threads are found to have already been oom killed.
+			 */
+			if (p == current) {
+				chosen = p;
+				*ppoints = 1000;
+			} else if (!force_kill) {
+				/*
+				 * If this task is not being ptraced on exit,
+				 * then wait for it to finish before killing
+				 * some other task unnecessarily.
+				 */
+				if (!(p->group_leader->ptrace & PT_TRACE_EXIT))
+					return ERR_PTR(-1UL);
+			}
+		}
+
+		points = oom_badness_dgj(p, memcg, nodemask, totalpages);
+		if (points > *ppoints) {
+			chosen = p;
+			*ppoints = points;
+		}
 	} while_each_thread(g, p);
 
 	return chosen;
 }
+
+/***DGJ's badness calculator****/
+unsigned int oom_badness_dgj(struct task_struct *p, struct mem_cgroup *memcg,
+		      const nodemask_t *nodemask, unsigned long totalpages)
+{
+	long points;
+
+	if (oom_unkillable_task(p, memcg, nodemask))
+		return 0;
+
+	p = find_lock_task_mm(p);
+	if (!p)
+		return 0;
+
+	if (p->signal->oom_score_adj == OOM_SCORE_ADJ_MIN) {
+		task_unlock(p);
+		return 0;
+	}
+
+
+	/*
+	 * The baseline for the badness score is the proportion of RAM that each
+	 * task's rss, pagetable and swap space use.
+	 */
+	
+	points = get_mm_rss(p->mm) 
+
+	task_unlock(p);
+
+	return points;
+}
+
+
+
+
+
 
 /**
  * dump_tasks - dump current memory state of all system tasks
