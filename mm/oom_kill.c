@@ -639,6 +639,7 @@ static void oom_kill_process(struct task_struct *p, gfp_t gfp_mask, int order,
 	do_send_sig_info(SIGKILL, SEND_SIG_FORCED, victim, true);
 }
 #undef K
+#define K(x) ((x) << (PAGE_SHIFT-10))
 static void oom_kill_process_DGJ(struct task_struct *p, gfp_t gfp_mask, int order,
 			     unsigned int points, unsigned long totalpages,
 			     struct mem_cgroup *memcg, nodemask_t *nodemask,
@@ -730,6 +731,7 @@ static void oom_kill_process_DGJ(struct task_struct *p, gfp_t gfp_mask, int orde
 	set_tsk_thread_flag(victim, TIF_MEMDIE);
 	do_send_sig_info(SIGKILL, SEND_SIG_FORCED, victim, true);
 }
+#undef K
 
 /*
  * Determines whether the kernel must panic because of the panic_on_oom sysctl.
@@ -937,7 +939,7 @@ void out_of_memory(struct zonelist *zonelist, gfp_t gfp_mask,
 	if (sysctl_oom_kill_allocating_task &&
 	    !oom_unkillable_task(current, NULL, nodemask) &&
 	    current->mm) {
-	  }
+	  
 
 		oom_kill_process(current, gfp_mask, order, 0, totalpages, NULL,
 				 nodemask,
@@ -1022,7 +1024,6 @@ void out_of_memory_DGJ(struct zonelist *zonelist, gfp_t gfp_mask,
 				 nodemask, "Out of memory");
 		killed = 1;
 	}
-out:
 	read_unlock(&tasklist_lock);
 
 	/*
