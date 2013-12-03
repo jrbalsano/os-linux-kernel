@@ -9,7 +9,8 @@
 #include "cowcopy.h"
 
 int main(int argc, char **argv) {
-  int test = cow_copy();
-  printf("Code returned %d\n", test);
+
+  char *errmsg = strerror(cow_copy());
+  printf("%s\n", errmsg);
   return 0;
 }

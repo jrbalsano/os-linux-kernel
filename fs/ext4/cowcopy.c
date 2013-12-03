@@ -35,14 +35,18 @@ asmlinkage int sys_ext4_cowcopy(const char __user *src, const char __user *dest)
   /* struct file * myFile = filp_open(src, O_RDONLY, 0644); */
   
   struct path pt;
-  printk("\n\n BEFORE KERN PATH\n\n");
-  if(kern_path(src, LOOKUP_FOLLOW | LOOKUP_DIRECTORY,  &pt) == 0){
-    printk("\n\n AFTER KERN PATH\n\n");
+  int error;
+  printk("\n\n%s\n\n", src);
+  error = user_path_at(0, src, 0, &pt);
+  if(!error){
     // Check if file is a directory or not
     if(!S_ISREG(pt.dentry->d_inode->i_mode)){
       printk("\n\nCHECKING IF IT DIRECTORY\n\n");
       return (-EPERM);
     }
+  }
+  else{
+    return error;
   }
   return 0;
 }
