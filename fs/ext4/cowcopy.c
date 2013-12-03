@@ -1,39 +1,48 @@
 #include <linux/compiler.h>
 #include <linux/sched.h>
 
-//not sure if these includes will work
+
+#include <linux/string.h>
+#include <linux/mm.h>
+#include <linux/file.h>
+#include <linux/fdtable.h>
+#include <linux/fsnotify.h>
+#include <linux/module.h>
+#include <linux/tty.h>
+#include <linux/namei.h>
+#include <linux/backing-dev.h>
+#include <linux/capability.h>
+#include <linux/securebits.h>
+#include <linux/security.h>
+#include <linux/mount.h>
+#include <linux/fcntl.h>
+#include <linux/slab.h>
+#include <asm/uaccess.h>
 #include <linux/fs.h>
-#include "internal.h"
+#include <linux/personality.h>
+#include <linux/pagemap.h>
+#include <linux/syscalls.h>
+#include <linux/rcupdate.h>
+#include <linux/audit.h>
+#include <linux/falloc.h>
+#include <linux/fs_struct.h>
+#include <linux/ima.h>
+#include <linux/dnotify.h>
+#include <linux/stat.h>
 
 asmlinkage int sys_ext4_cowcopy(const char __user *src, const char __user *dest) {
 
-  struct file * myFile = filp_open(src, O_RDONLY, 0644);
-
+  /* struct file * myFile = filp_open(src, O_RDONLY, 0644); */
   
-  //if path is not null, check to see if the same as the src
-  if(file.path){
-    char *myPath = &file.path;
-    char *srcPointer = src;
-
-    int validPath = 1;
-    while(myPath){
-	if(*myPath != *srcPointer){
-		validPath=0;
-		break;
-	}
-
-	myPath++;
-	srcPointer++;
+  struct path pt;
+  printk("\n\n BEFORE KERN PATH\n\n");
+  if(kern_path(src, LOOKUP_FOLLOW | LOOKUP_DIRECTORY,  &pt) == 0){
+    printk("\n\n AFTER KERN PATH\n\n");
+    // Check if file is a directory or not
+    if(!S_ISREG(pt.dentry->d_inode->i_mode)){
+      printk("\n\nCHECKING IF IT DIRECTORY\n\n");
+      return (-EPERM);
     }
-
-    if(!validPath){
-	return -1; //change this to the proper error
-    }
-
-    //now check device
-
-  } 
-
-
+  }
   return 0;
 }
