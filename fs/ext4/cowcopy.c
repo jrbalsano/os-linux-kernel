@@ -77,14 +77,14 @@ asmlinkage int sys_ext4_cowcopy(const char __user *src, const char __user *dest)
   strcpy(dest_filename, dest_filename_start);
 
   //get dentry for dest (which is nonexistent at this point)
-  error = user_path_at(0, dest, LOOKUP_CREATE, &destpt);
+  error = user_path_at(0, dest, 0, &destpt);
   if(error == -ENOENT){
-    /* if(pt.mnt->mnt_root == destpt.mnt->mnt_root){ */
-    /*   printk("YAAAY\n"); */
-    /* } */
+     /* if(pt.mnt->mnt_sb == destpt.mnt->mnt_sb){ */
+       printk("YAAAY\n");
+     /* } */
   }
-  else{
-    printk("\n\n\nNo error for dest\n\n\n");
+  else if(!error){
+    return -EEXIST;
   }
 
   return 0;
