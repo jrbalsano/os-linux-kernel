@@ -65,7 +65,7 @@ asmlinkage int sys_ext4_cowcopy(const char __user *src, const char __user *dest)
     printk("Passed all tests\n");
   }
   else{
-    return error;
+    return -EEXIST;
   }
 
   //check for same filesystem by comparing mount
