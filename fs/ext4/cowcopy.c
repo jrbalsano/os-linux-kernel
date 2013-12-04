@@ -47,20 +47,14 @@ asmlinkage int sys_ext4_cowcopy(const char __user *src, const char __user *dest)
       printk("\n\nCHECKING IF IT'S DIRECTORY\n\n");
       return (-EPERM);
     }
+    // Check if src is in a ext4 file system
+    if(1){
+      printk("FILE SYSTEM TYPE: %s\n", dentry->d_sb->s_type->name);
+    }
     printk("Passed all tests\n");
   }
   else{
     return error;
-  }
-
-  //check for same filesystem by comparing mount
-
-  //get dentry for dest (which is nonexistent at this point)
-  error = user_path_at(0, dest, 0, &destpt);
-  if(error){
-     printk("\n\n\nGot error for dest\n\n\n");
-  }else{
-     printk("\n\n\nNo error for dest\n\n\n");
   }
 
   return 0;
