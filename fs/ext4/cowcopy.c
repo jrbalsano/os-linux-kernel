@@ -52,16 +52,25 @@ asmlinkage int sys_ext4_cowcopy(const char __user *src, const char __user *dest)
   error = user_path_at(0, src, 0, &pt);
   if(!error){
     printk("\n\nChecking for errors\n\n");
+    
     // Check if file is a directory or not
     if(!S_ISREG(pt.dentry->d_inode->i_mode)){
       printk("\n\nCHECKING IF IT'S DIRECTORY\n\n");
       return (-EPERM);
     }
+    
     // Check if src is in a ext4 file system
     printk("FILE SYSTEM TYPE: %s\n", pt.dentry->d_sb->s_type->name);
     if(strcmp(ext4_string, pt.dentry->d_sb->s_type->name)){
       return (-EOPNOTSUPP);
     }
+    
+    // Check if file is being written to
+    printk("\n\nCHECKING IF BEING WRITTEN TO\n\n");
+    if (pt.dentry->d_inode->i_writecount > 0) {
+      return -EPERM;
+    }
+
     printk("Passed all tests\n");
   }
   else if (error == -ENOENT) {
