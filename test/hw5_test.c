@@ -9,8 +9,8 @@
 #include "cowcopy.h"
 
 int main(int argc, char **argv) {
-
-  char *errmsg = strerror(cow_copy());
-  printf("%s\n", errmsg);
+  int myerrno = cow_copy("/data/local/tmp/hw5_test", "/data/test");
+  char *errmsg = strerror(myerrno);
+  printf("%s\nNumber: %d\n", errmsg, myerrno);
   return 0;
 }

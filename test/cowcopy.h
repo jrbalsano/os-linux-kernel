@@ -5,8 +5,8 @@
 
 #define __COW_COPY 378 
 
-inline long cow_copy() {
-  return syscall(__COW_COPY, '/');
+inline long cow_copy(char *src, char *dest) {
+  return syscall(__COW_COPY, src, dest);
 }
 
 

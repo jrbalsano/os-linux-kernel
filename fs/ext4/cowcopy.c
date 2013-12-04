@@ -36,14 +36,17 @@ asmlinkage int sys_ext4_cowcopy(const char __user *src, const char __user *dest)
   
   struct path pt;
   int error;
-  printk("\n\n%s\n\n", src);
+  char *safe_name = getname(src);
+  printk("%s\n", safe_name);
   error = user_path_at(0, src, 0, &pt);
   if(!error){
+    printk("\n\nChecking for errors\n\n");
     // Check if file is a directory or not
     if(!S_ISREG(pt.dentry->d_inode->i_mode)){
-      printk("\n\nCHECKING IF IT DIRECTORY\n\n");
+      printk("\n\nCHECKING IF IT'S DIRECTORY\n\n");
       return (-EPERM);
     }
+    printk("Passed all tests\n");
   }
   else{
     return error;
