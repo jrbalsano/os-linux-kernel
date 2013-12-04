@@ -34,7 +34,8 @@ asmlinkage int sys_ext4_cowcopy(const char __user *src, const char __user *dest)
 
   /* struct file * myFile = filp_open(src, O_RDONLY, 0644); */
   
-  struct path pt;
+  struct path pt; //path for src
+  struct path destpt; //path for dest
   int error;
   char *safe_name = getname(src);
   printk("%s\n", safe_name);
@@ -51,5 +52,16 @@ asmlinkage int sys_ext4_cowcopy(const char __user *src, const char __user *dest)
   else{
     return error;
   }
+
+  //check for same filesystem by comparing mount
+
+  //get dentry for dest (which is nonexistent at this point)
+  error = user_path_at(0, dest, 0, &destpt);
+  if(error){
+     printk("\n\n\nGot error for dest\n\n\n");
+  }else{
+     printk("\n\n\nNo error for dest\n\n\n");
+  }
+
   return 0;
 }
