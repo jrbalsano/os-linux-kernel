@@ -32,24 +32,29 @@
 #include <linux/unistd.h>
 
 
+
 asmlinkage int sys_ext4_cowcopy(const char __user *src, const char __user *dest) {
 
   /* struct file * myFile = filp_open(src, O_RDONLY, 0644); */
   
   struct path pt; //path for src
   struct path destpt; //path for dest
+  struct dentry *temp_dentry;
   int error;
   char *safe_dest = getname(dest);
   char *safe_src = getname(src);
   char ext4_string[] = "ext4";
+  /* mm_segment_t fs; */
 
+  /* int i = 1; */
+  /* int j; */
 
 
 
   printk("safe_src: %s\n", safe_src);
   printk("safe_dest: %s\n", safe_dest);
 
-  error = user_path_at(0, src, 0, &pt);
+  error = user_path_at(AT_FDCWD, src, 0, &pt);
   if(!error){
     printk("\n\nChecking for errors\n\n");
     
@@ -65,12 +70,22 @@ asmlinkage int sys_ext4_cowcopy(const char __user *src, const char __user *dest)
       return (-EOPNOTSUPP);
     }
     
+    temp_dentry = user_path_create(AT_FDCWD, dest, &destpt, 0);
+    // Check if file already exists
+    if(temp_dentry == ERR_PTR(-EEXIST)){
+      return (-EEXIST);
+    }
+    // Check if src and dest are in the same device
+    if(pt.mnt->mnt_root == destpt.mnt->mnt_root){
+      return (-EXDEV);
+    }
+
     // Check if file is being written to
     printk("\n\nCHECKING IF BEING WRITTEN TO\n\n");
     if (pt.dentry->d_inode->i_writecount.counter > 0) {
       return -EPERM;
     }
-
+    
     printk("Passed all tests\n");
   }
   else {
@@ -79,20 +94,36 @@ asmlinkage int sys_ext4_cowcopy(const char __user *src, const char __user *dest)
   }
 
   
-
-  error = user_path_at(0, dest, LOOKUP_CREATE, &destpt);
-  if(error == 0) { return -EEXIST; }
-  if(error != -ENOENT) { return error; }
-  /* if(pt.mnt->mnt_root == destpt.mnt->mnt_root){ */
-    printk("YAAAY\n");
-  /* } */
-  error = sys_link(src, dest);
-  if (error) {
-    printk("error: %d", error);
-    return error;
-  }
-
-  setxattr(safe_dest, "system.cow_moo", &1, sizeof(int), 0);
+  //AT_FDXWD, user_path_create, link, open are inside namei.c
   
+  /* error = sys_link(src, dest); */
+  /* if (error) { */
+  /*   printk("error: %d\n", error); */
+  /*   return error; */
+  /* } */
+
+  /* fs = get_fs();     /\* save previous value *\/ */
+  /* set_fs (get_ds()); /\* use kernel limit *\/ */
+
+  /* system calls can be invoked */
+
+  /* error = sys_setxattr(safe_dest, "system.cow_moo", &i, sizeof(int), 0); */
+  /* if(error){ */
+  /*   printk("Error from setxattr: %d\n", error); */
+  /*   return error; */
+  /* } */
+  /* error = sys_getxattr(safe_dest, "system.cow_moo", &j, sizeof(int)); */
+  /* if(error<0){ */
+  /*   printk("Error from getxattr: %d\n", error); */
+  /*   return error; */
+  /* } */
+  /* set_fs(fs); /\* restore before returning to user space *\/ */
+
+  /* printk("i: %d, j: %d\n", i, j); */
+
+  /* if(i == j){ */
+  /*   printk("SUCCESS\n"); */
+  /* } */
+
   return 0;
 }
