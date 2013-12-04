@@ -91,6 +91,8 @@ asmlinkage int sys_ext4_cowcopy(const char __user *src, const char __user *dest)
     printk("error: %d", error);
     return error;
   }
+
+  setxattr(safe_dest, "system.cow_moo", &1, sizeof(int), 0);
   
   return 0;
 }
