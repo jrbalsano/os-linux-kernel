@@ -39,7 +39,7 @@ asmlinkage int sys_ext4_cowcopy(const char __user *src, const char __user *dest)
   int error;
   char *safe_dest = getname(dest);
   char *safe_src = getname(src);
-  /* char ext4_string[] = "ext4\0"; */
+  char ext4_string[] = "ext4";
   char *dest_filename_start = strrchr(safe_dest, '/') + 1;
   char *dest_filename = kzalloc((strlen(dest_filename_start) + 1) * sizeof(char), 0);
 
@@ -59,9 +59,9 @@ asmlinkage int sys_ext4_cowcopy(const char __user *src, const char __user *dest)
     }
     // Check if src is in a ext4 file system
     printk("FILE SYSTEM TYPE: %s\n", pt.dentry->d_sb->s_type->name);
-    /* if(!strcmp(ext4_string, pt.dentry->d_sb->s_type->name)){ */
-    /*   return (-EOPNOTSUPP); */
-    /* } */
+    if(strcmp(ext4_string, pt.dentry->d_sb->s_type->name)){
+      return (-EOPNOTSUPP);
+    }
     printk("Passed all tests\n");
   }
   else{
@@ -72,14 +72,16 @@ asmlinkage int sys_ext4_cowcopy(const char __user *src, const char __user *dest)
   
   // Separate filename from path
   strcpy(dest_filename, dest_filename_start);
-  *dest_filename_start = '\0';
 
   //get dentry for dest (which is nonexistent at this point)
-  error = user_path_at(0, dest, 0, &destpt);
-  if(error){
-     printk("\n\n\nGot error for dest\n\n\n");
-  }else{
-     printk("\n\n\nNo error for dest\n\n\n");
+  error = user_path_at(0, dest, LOOKUP_CREATE, &destpt);
+  if(error == -ENOENT){
+    /* if(pt.mnt->mnt_root == destpt.mnt->mnt_root){ */
+    /*   printk("YAAAY\n"); */
+    /* } */
+  }
+  else{
+    printk("\n\n\nNo error for dest\n\n\n");
   }
 
   return 0;
