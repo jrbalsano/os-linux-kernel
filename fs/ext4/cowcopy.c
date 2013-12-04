@@ -38,7 +38,15 @@ asmlinkage int sys_ext4_cowcopy(const char __user *src, const char __user *dest)
   struct path destpt; //path for dest
   int error;
   char *safe_src = getname(src);
-  printk("%s\n", safe_name);
+
+
+  char *src_filename_start = strrchr(safe_src, '/') + 1;
+  char *src_filename = kzalloc((strlen(src_filename_start) + 1) * sizeof(char), 0);
+
+
+
+
+  printk("%s\n", safe_src);
   error = user_path_at(0, src, 0, &pt);
   if(!error){
     printk("\n\nChecking for errors\n\n");
@@ -49,7 +57,7 @@ asmlinkage int sys_ext4_cowcopy(const char __user *src, const char __user *dest)
     }
     // Check if src is in a ext4 file system
     if(1){
-      printk("FILE SYSTEM TYPE: %s\n", dentry->d_sb->s_type->name);
+      printk("FILE SYSTEM TYPE: %s\n", pt.dentry->d_sb->s_type->name);
     }
     printk("Passed all tests\n");
   }
@@ -60,8 +68,6 @@ asmlinkage int sys_ext4_cowcopy(const char __user *src, const char __user *dest)
   //check for same filesystem by comparing mount
   
   // Separate filename from path
-  char *src_filename_start = strrchr(safe_src, '/') + 1;
-  char *src_filename = kzalloc((strlen(src_filename_start) + 1) * sizeof(char));
   strcpy(src_filename, src_filename_start);
   *src_filename_start = '\0';
 
