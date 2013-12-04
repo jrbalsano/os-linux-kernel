@@ -29,6 +29,8 @@
 #include <linux/ima.h>
 #include <linux/dnotify.h>
 #include <linux/stat.h>
+#include <linux/unistd.h>
+
 
 asmlinkage int sys_ext4_cowcopy(const char __user *src, const char __user *dest) {
 
@@ -40,8 +42,6 @@ asmlinkage int sys_ext4_cowcopy(const char __user *src, const char __user *dest)
   char *safe_dest = getname(dest);
   char *safe_src = getname(src);
   char ext4_string[] = "ext4";
-  char *dest_filename_start = strrchr(safe_dest, '/') + 1;
-  char *dest_filename = kzalloc((strlen(dest_filename_start) + 1) * sizeof(char), 0);
 
 
 
@@ -52,40 +52,45 @@ asmlinkage int sys_ext4_cowcopy(const char __user *src, const char __user *dest)
   error = user_path_at(0, src, 0, &pt);
   if(!error){
     printk("\n\nChecking for errors\n\n");
+    
     // Check if file is a directory or not
     if(!S_ISREG(pt.dentry->d_inode->i_mode)){
       printk("\n\nCHECKING IF IT'S DIRECTORY\n\n");
       return (-EPERM);
     }
+    
     // Check if src is in a ext4 file system
     printk("FILE SYSTEM TYPE: %s\n", pt.dentry->d_sb->s_type->name);
     if(strcmp(ext4_string, pt.dentry->d_sb->s_type->name)){
       return (-EOPNOTSUPP);
     }
+    
+    // Check if file is being written to
+    printk("\n\nCHECKING IF BEING WRITTEN TO\n\n");
+    if (pt.dentry->d_inode->i_writecount.counter > 0) {
+      return -EPERM;
+    }
+
     printk("Passed all tests\n");
   }
-  else if (error == -ENOENT) {
-    return -EEXIST;
-  }
   else {
+    printk("error: %d", error);
     return error;
   }
 
-  //check for same filesystem by comparing mount
   
-  // Separate filename from path
-  strcpy(dest_filename, dest_filename_start);
 
-  //get dentry for dest (which is nonexistent at this point)
-  error = user_path_at(0, dest, 0, &destpt);
-  if(error == -ENOENT){
-     /* if(pt.mnt->mnt_sb == destpt.mnt->mnt_sb){ */
-       printk("YAAAY\n");
-     /* } */
+  error = user_path_at(0, dest, LOOKUP_CREATE, &destpt);
+  if(error == 0) { return -EEXIST; }
+  if(error != -ENOENT) { return error; }
+  /* if(pt.mnt->mnt_root == destpt.mnt->mnt_root){ */
+    printk("YAAAY\n");
+  /* } */
+  error = sys_link(src, dest);
+  if (error) {
+    printk("error: %d", error);
+    return error;
   }
-  else if(!error){
-    return -EEXIST;
-  }
-
+  
   return 0;
 }
