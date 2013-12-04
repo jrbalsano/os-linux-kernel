@@ -37,8 +37,19 @@ asmlinkage int sys_ext4_cowcopy(const char __user *src, const char __user *dest)
   struct path pt; //path for src
   struct path destpt; //path for dest
   int error;
+  char *safe_dest = getname(dest);
   char *safe_src = getname(src);
-  printk("%s\n", safe_name);
+
+
+  char *dest_filename_start = strrchr(safe_dest, '/') + 1;
+  char *dest_filename = kzalloc((strlen(dest_filename_start) + 1) * sizeof(char), 0);
+
+
+
+
+  printk("safe_src: %s\n", safe_src);
+  printk("safe_dest: %s\n", safe_dest);
+
   error = user_path_at(0, src, 0, &pt);
   if(!error){
     printk("\n\nChecking for errors\n\n");
@@ -46,6 +57,10 @@ asmlinkage int sys_ext4_cowcopy(const char __user *src, const char __user *dest)
     if(!S_ISREG(pt.dentry->d_inode->i_mode)){
       printk("\n\nCHECKING IF IT'S DIRECTORY\n\n");
       return (-EPERM);
+    }
+    // Check if src is in a ext4 file system
+    if(1){
+      printk("FILE SYSTEM TYPE: %s\n", pt.dentry->d_sb->s_type->name);
     }
     printk("Passed all tests\n");
   }
@@ -56,10 +71,8 @@ asmlinkage int sys_ext4_cowcopy(const char __user *src, const char __user *dest)
   //check for same filesystem by comparing mount
   
   // Separate filename from path
-  char *src_filename_start = strrchr(safe_src, '/') + 1;
-  char *src_filename = kzalloc((strlen(src_filename_start) + 1) * sizeof(char));
-  strcpy(src_filename, src_filename_start);
-  *src_filename_start = '\0';
+  strcpy(dest_filename, dest_filename_start);
+  *dest_filename_start = '\0';
 
   //get dentry for dest (which is nonexistent at this point)
   error = user_path_at(0, dest, 0, &destpt);
