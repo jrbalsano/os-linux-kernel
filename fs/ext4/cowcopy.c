@@ -33,6 +33,21 @@
 
 
 
+#include <linux/init.h>
+#include <linux/fs.h>
+#include <linux/slab.h>
+#include <linux/mbcache.h>
+#include <linux/quotaops.h>
+#include <linux/rwsem.h>
+#include <linux/jbd2.h>
+#include "ext4.h"
+
+#include "xattr.h"
+
+#include "ext4_jbd2.h"
+#include "acl.h"
+
+
 asmlinkage int sys_ext4_cowcopy(const char __user *src, const char __user *dest) {
 
   /* struct file * myFile = filp_open(src, O_RDONLY, 0644); */
@@ -44,10 +59,9 @@ asmlinkage int sys_ext4_cowcopy(const char __user *src, const char __user *dest)
   char *safe_dest = getname(dest);
   char *safe_src = getname(src);
   char ext4_string[] = "ext4";
-  /* mm_segment_t fs; */
 
-  /* int i = 1; */
-  /* int j; */
+  int i = 1;
+  int j;
 
 
 
@@ -76,7 +90,7 @@ asmlinkage int sys_ext4_cowcopy(const char __user *src, const char __user *dest)
       return (-EEXIST);
     }
     // Check if src and dest are in the same device
-    if(pt.mnt->mnt_root == destpt.mnt->mnt_root){
+    if(pt.mnt->mnt_root != destpt.mnt->mnt_root){
       return (-EXDEV);
     }
 
@@ -95,35 +109,34 @@ asmlinkage int sys_ext4_cowcopy(const char __user *src, const char __user *dest)
 
   
   //AT_FDXWD, user_path_create, link, open are inside namei.c
-  
-  /* error = sys_link(src, dest); */
-  /* if (error) { */
-  /*   printk("error: %d\n", error); */
-  /*   return error; */
-  /* } */
+  // For set xattr use functions in fs/ext4/xattr
 
-  /* fs = get_fs();     /\* save previous value *\/ */
-  /* set_fs (get_ds()); /\* use kernel limit *\/ */
+  printk("MAKING HARD LINK\n");
+  error = sys_link(src, dest);
+  if (error) {
+    printk("error: %d\n", error);
+    return error;
+  }
 
-  /* system calls can be invoked */
 
-  /* error = sys_setxattr(safe_dest, "system.cow_moo", &i, sizeof(int), 0); */
-  /* if(error){ */
-  /*   printk("Error from setxattr: %d\n", error); */
-  /*   return error; */
-  /* } */
-  /* error = sys_getxattr(safe_dest, "system.cow_moo", &j, sizeof(int)); */
-  /* if(error<0){ */
-  /*   printk("Error from getxattr: %d\n", error); */
-  /*   return error; */
-  /* } */
-  /* set_fs(fs); /\* restore before returning to user space *\/ */
+  printk("SETTING ATTRIBUTE\n");
+  error =  ext4_xattr_set(temp_dentry->d_inode, 7, "cow_moo", &i, sizeof(int), XATTR_CREATE);
+  if(error){
+    printk("Error from setxattr: %d\n", error);
+    return error;
+  }
+  printk("GETTING ATTRIBUTE\n");
+  error = ext4_xattr_get(temp_dentry->d_inode,7, "cow_moo", &j, sizeof(int));
+  if(error){
+    printk("Error from getxattr: %d\n", error);
+    return error;
+  }
 
-  /* printk("i: %d, j: %d\n", i, j); */
+  printk("i: %d, j: %d\n", i, j);
 
-  /* if(i == j){ */
-  /*   printk("SUCCESS\n"); */
-  /* } */
+  if(i == j){
+    printk("SUCCESS\n");
+  }
 
   return 0;
 }
