@@ -29,6 +29,7 @@
 #include "ext4_jbd2.h"
 #include "xattr.h"
 #include "acl.h"
+#include <linux/list.h>
 
 /*
  * Called when an inode is released. Note that this is different
@@ -170,7 +171,7 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
         struct page *page_old;
         struct nameidata nd; //create empty nameidata for vfs_create
 	struct inode in;
-	struct list_head alias_head;
+	//struct list_head alias_head;
 	int vfs_error;
 	/* struct page *page_new; */
 
@@ -195,8 +196,11 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
           //testing vfs_create
 	  filp->f_path.dentry->d_inode=&in;
 
-	  filp->f_path.dentry->d_alias= alias_head;
-	  vfs_error = vfs_unlink(filp->f_path.dentry->d_parent->d_inode, filp->f_path.dentry);
+	  INIT_LIST_HEAD(&filp->f_path.dentry->d_alias);
+
+	  //call some init macro on d_alias and perhaps d_inode as well (?)
+
+          vfs_error = vfs_unlink(filp->f_path.dentry->d_parent->d_inode, filp->f_path.dentry);
 	  if(vfs_error){
 	    printk("got a vfs_error unlink: %d\n", vfs_error);
 	  }else{
