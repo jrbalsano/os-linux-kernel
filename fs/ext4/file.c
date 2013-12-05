@@ -172,6 +172,8 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
 
         if(error > 0){
 	  printk("\nWE'VE GOT A COWMOO: %d\n", j);
+	  printk("\nFile permission: %d\n", filp->f_mode);
+          	
 	}
 
 
