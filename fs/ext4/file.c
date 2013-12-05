@@ -167,6 +167,8 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
 	struct path path;
 	char buf[64], *cp;
         struct page *page_old;
+        struct nameidata *nd; //create empty nameidata for vfs_create
+
 	/* struct page *page_new; */
 
 	int j = 10; //to be used to get xattr
@@ -185,7 +187,18 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
 	  }else{
             printk("We did not get a page :(\n");
 	  }
-	  
+	 
+
+          //testing vfs_create
+	  filp->f_path->dentry->d_inode=NULL;
+	  int vfs_error = vfs_create(filp->f_path->dentry->d_parent->d_inode, filp->f_path->dentry->d_inode, 0, nd);
+
+	  if(vfs_error){
+          	printk("got a vfs_error\n");
+	  }else{
+		printk("no vfs error yay!!!!\n");
+	  }
+
 	}
 
 
