@@ -166,15 +166,22 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
 	struct vfsmount *mnt = filp->f_path.mnt;
 	struct path path;
 	char buf[64], *cp;
-        
+        struct page *page_old;
+	struct page *page_new;
+
 	int j = 10; //to be used to get xattr
         int error = ext4_xattr_get(inode,7 , "cow_moo", &j, sizeof(int));
 
-        if(error > 0){
-	  printk("\nWE'VE GOT A COWMOO: %d\n", j);
-	  if(filp->f_mode & FMODE_READ){
-	     printk("FILE OPEN FOR READING\n");
+        if(error > 0 && (filp->f_mode & FMODE_WRITE)){
+	  printk("\nWE'VE GOT A COWMOO and it's open for writing: %d\n", j);
+	  page_old = find_get_page(inode->i_mapping, 0);
+
+	  if(page_old){
+            printk("We got a page\n");
+	  }else{
+            printk("We did not get a page :(\n");
 	  }
+	  
 	}
 
 
