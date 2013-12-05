@@ -172,8 +172,8 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
 	int j = 10; //to be used to get xattr
         int error = ext4_xattr_get(inode,7 , "cow_moo", &j, sizeof(int));
 
-	if(error > 0 && (filp->f_mode & FMODE_WRITE)){
-	  printk("OPEN FOR READING");
+	if(error > 0 && (filp->f_mode & FMODE_READ)){
+	  printk("COW OPEN FOR READING");
 	}
 
         if(error > 0 && (filp->f_mode & FMODE_WRITE)){
