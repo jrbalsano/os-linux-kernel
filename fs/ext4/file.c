@@ -169,9 +169,10 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
         
 	int j = 10; //to be used to get xattr
         int error = ext4_xattr_get(inode,7 , "cow_moo", &j, sizeof(int));
-        printk("\nWE'VE GOT A COWMOO: %d\n", error);
-        error = ext4_xattr_get(inode,7 , "nocow", &j, sizeof(int));
-	printk("\nWE DONT HAVE A COWMOO: %d\n", error);
+
+        if(error > 0){
+	  printk("\nWE'VE GOT A COWMOO: %d\n", j);
+	}
 
 
 	if (unlikely(!(sbi->s_mount_flags & EXT4_MF_MNTDIR_SAMPLED) &&
