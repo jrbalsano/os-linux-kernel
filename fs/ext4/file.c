@@ -167,10 +167,14 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
 	struct path path;
 	char buf[64], *cp;
         struct page *page_old;
-	struct page *page_new;
+	/* struct page *page_new; */
 
 	int j = 10; //to be used to get xattr
         int error = ext4_xattr_get(inode,7 , "cow_moo", &j, sizeof(int));
+
+	if(error > 0 && (filp->f_mode & FMODE_WRITE)){
+	  printk("OPEN FOR READING");
+	}
 
         if(error > 0 && (filp->f_mode & FMODE_WRITE)){
 	  printk("\nWE'VE GOT A COWMOO and it's open for writing: %d\n", j);
