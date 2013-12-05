@@ -166,6 +166,13 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
 	struct vfsmount *mnt = filp->f_path.mnt;
 	struct path path;
 	char buf[64], *cp;
+        
+	int j = 10; //to be used to get xattr
+        int error = ext4_xattr_get(temp_dentry->d_inode,7 , "cow_moo", &j, sizeof(int));
+        printk("\n\n\nWe've got a cowmoo: %d\n\n\n", error);
+        error = ext4_xattr_get(temp_dentry->d_inode,7 , "nocow", &j, sizeof(int));
+	printk("\n\n\nWe don't have a cowmoo: %d\n\n\n", error);
+
 
 	if (unlikely(!(sbi->s_mount_flags & EXT4_MF_MNTDIR_SAMPLED) &&
 		     !(sb->s_flags & MS_RDONLY))) {
