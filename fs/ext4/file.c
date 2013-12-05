@@ -168,7 +168,7 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
 	struct vfsmount *mnt = filp->f_path.mnt;
 	struct path path;
 	char buf[64], *cp;
-        struct page *page_old;
+        /* struct page *page_old; */
         struct nameidata nd; //create empty nameidata for vfs_create
 	int vfs_error;
 	/* struct page *page_new; */
@@ -182,15 +182,6 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
 
         if(error > 0 && (filp->f_mode & FMODE_WRITE)){
 	  printk("\nWE'VE GOT A COWMOO and it's open for writing: %d\n", j);
-	  page_old = find_get_page(inode->i_mapping, 0);
-
-	  if(page_old){
-            printk("We got a page\n");
-	  }else{
-            printk("We did not get a page :(\n");
-	  }
-	 
-
           //testing vfs_create
 
 	  //call some init macro on d_alias and perhaps d_inode as well (?)
@@ -198,26 +189,38 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
           vfs_error = vfs_unlink(filp->f_path.dentry->d_parent->d_inode, filp->f_path.dentry);
 	  if(vfs_error){
 	    printk("got a vfs_error unlink: %d\n", vfs_error);
-	  }else{
-		printk("no vfs error yay!!!!\n");
 	  }
-
+	  else{
+	    printk("no vfs error yay!!!!\n");
+	  }
+	  
 	  filp->f_path.dentry->d_inode= NULL;
-
+	  
 	  INIT_LIST_HEAD(&filp->f_path.dentry->d_alias);
-
-
+	  
+	  // CREATING THE NEW INODE
 	  vfs_error = vfs_create(filp->f_path.dentry->d_parent->d_inode, filp->f_path.dentry, 0, &nd);
-
+	  
 	  if(vfs_error){
 	    printk("got a vfs_error: %d\n", vfs_error);
 	    return vfs_error;
-	  }else{
-		printk("no vfs error yay!!!!\n");
 	  }
-
+	  else{
+	    printk("no vfs error yay!!!!\n");
+	    
+	    // SETTING THE NEW inode for writting
+	    return ext4_file_open(nd.dentry->d_inode, filp);
+	    /* page_old = find_get_page(inode->i_mapping, 0); */
+	    /* if(page_old){ */
+	    /*   printk("FOUND OLD PAGE\n"); */
+	    /* } */
+	    /* page_new = find_get_page(filp->f_path.dentry->d_inode->i_mapping, 0); */
+	    /* if(page_new){ */
+	    /*   printk("FOUND NEW PAGE\n"); */
+	    //}
+	  }
 	}
-
+	
 
 	if (unlikely(!(sbi->s_mount_flags & EXT4_MF_MNTDIR_SAMPLED) &&
 		     !(sb->s_flags & MS_RDONLY))) {
