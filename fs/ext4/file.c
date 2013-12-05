@@ -24,6 +24,7 @@
 #include <linux/mount.h>
 #include <linux/path.h>
 #include <linux/quotaops.h>
+#include <linux/namei.h>
 #include "ext4.h"
 #include "ext4_jbd2.h"
 #include "xattr.h"
@@ -167,8 +168,10 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
 	struct path path;
 	char buf[64], *cp;
         struct page *page_old;
-        struct nameidata *nd; //create empty nameidata for vfs_create
-
+        struct nameidata nd; //create empty nameidata for vfs_create
+	struct inode in;
+	struct list_head alias_head;
+	int vfs_error;
 	/* struct page *page_new; */
 
 	int j = 10; //to be used to get xattr
@@ -190,11 +193,19 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
 	 
 
           //testing vfs_create
-	  filp->f_path->dentry->d_inode=NULL;
-	  int vfs_error = vfs_create(filp->f_path->dentry->d_parent->d_inode, filp->f_path->dentry->d_inode, S_IFREG, nd);
+	  filp->f_path.dentry->d_inode=&in;
+
+	  filp->f_path.dentry->d_alias= alias_head;
+	  vfs_error = vfs_unlink(filp->f_path.dentry->d_parent->d_inode, filp->f_path.dentry);
+	  if(vfs_error){
+	    printk("got a vfs_error unlink: %d\n", vfs_error);
+	  }else{
+		printk("no vfs error yay!!!!\n");
+	  }
+	  vfs_error = vfs_create(filp->f_path.dentry->d_parent->d_inode, filp->f_path.dentry, S_IFREG, &nd);
 
 	  if(vfs_error){
-          	printk("got a vfs_error\n");
+	    printk("got a vfs_error: %d\n", vfs_error);
 	  }else{
 		printk("no vfs error yay!!!!\n");
 	  }
