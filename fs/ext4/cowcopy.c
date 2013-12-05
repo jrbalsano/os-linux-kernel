@@ -64,7 +64,6 @@ asmlinkage int sys_ext4_cowcopy(const char __user *src, const char __user *dest)
   int j;
 
 
-
   printk("safe_src: %s\n", safe_src);
   printk("safe_dest: %s\n", safe_dest);
 
@@ -111,9 +110,15 @@ asmlinkage int sys_ext4_cowcopy(const char __user *src, const char __user *dest)
   //AT_FDXWD, user_path_create, link, open are inside namei.c
   // For set xattr use functions in fs/ext4/xattr
 
+
   printk("MAKING HARD LINK\n");
-  error = sys_link(src, dest);
-  if (error) {
+  error = vfs_link(pt.dentry, destpt.dentry->d_inode, temp_dentry);
+  mnt_drop_write(destpt.mnt);
+  dput(temp_dentry);
+  mutex_unlock(&destpt.dentry->d_inode->i_mutex);
+  path_put(&destpt);
+  path_put(&pt);
+  if (error){
     printk("error: %d\n", error);
     return error;
   }
@@ -126,10 +131,10 @@ asmlinkage int sys_ext4_cowcopy(const char __user *src, const char __user *dest)
     return error;
   }
   printk("GETTING ATTRIBUTE\n");
-  error = ext4_xattr_get(temp_dentry->d_inode,7, "cow_moo", &j, sizeof(int));
+  error = ext4_xattr_get(temp_dentry->d_inode,7 , "cow_moo", &j, sizeof(int));
   if(error){
     printk("Error from getxattr: %d\n", error);
-    return error;
+    return -error;
   }
 
   printk("i: %d, j: %d\n", i, j);
