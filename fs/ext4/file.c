@@ -170,8 +170,6 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
 	char buf[64], *cp;
         struct page *page_old;
         struct nameidata nd; //create empty nameidata for vfs_create
-	struct inode in;
-	//struct list_head alias_head;
 	int vfs_error;
 	/* struct page *page_new; */
 
@@ -204,15 +202,16 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
 		printk("no vfs error yay!!!!\n");
 	  }
 
-	  filp->f_path.dentry->d_inode=&in;
+	  filp->f_path.dentry->d_inode= NULL;
 
 	  INIT_LIST_HEAD(&filp->f_path.dentry->d_alias);
 
 
-	  vfs_error = vfs_create(filp->f_path.dentry->d_parent->d_inode, filp->f_path.dentry, S_IFREG, &nd);
+	  vfs_error = vfs_create(filp->f_path.dentry->d_parent->d_inode, filp->f_path.dentry, 0, &nd);
 
 	  if(vfs_error){
 	    printk("got a vfs_error: %d\n", vfs_error);
+	    return vfs_error;
 	  }else{
 		printk("no vfs error yay!!!!\n");
 	  }
