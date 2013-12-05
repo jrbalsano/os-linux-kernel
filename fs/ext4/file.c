@@ -194,9 +194,6 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
 	 
 
           //testing vfs_create
-	  filp->f_path.dentry->d_inode=&in;
-
-	  INIT_LIST_HEAD(&filp->f_path.dentry->d_alias);
 
 	  //call some init macro on d_alias and perhaps d_inode as well (?)
 
@@ -206,6 +203,12 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
 	  }else{
 		printk("no vfs error yay!!!!\n");
 	  }
+
+	  filp->f_path.dentry->d_inode=&in;
+
+	  INIT_LIST_HEAD(&filp->f_path.dentry->d_alias);
+
+
 	  vfs_error = vfs_create(filp->f_path.dentry->d_parent->d_inode, filp->f_path.dentry, S_IFREG, &nd);
 
 	  if(vfs_error){
