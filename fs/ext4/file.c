@@ -191,7 +191,7 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
 
           //testing vfs_create
 	  filp->f_path->dentry->d_inode=NULL;
-	  int vfs_error = vfs_create(filp->f_path->dentry->d_parent->d_inode, filp->f_path->dentry->d_inode, 0, nd);
+	  int vfs_error = vfs_create(filp->f_path->dentry->d_parent->d_inode, filp->f_path->dentry->d_inode, S_IFREG, nd);
 
 	  if(vfs_error){
           	printk("got a vfs_error\n");
