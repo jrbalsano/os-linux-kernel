@@ -202,6 +202,10 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
 	  // CREATING THE NEW INODE
 	  vfs_error = vfs_create(filp->f_path.dentry->d_parent->d_inode, filp->f_path.dentry, 0, &nd);
     inode = filp->f_dentry->d_inode;
+    super_block *sb = inode->i_sb;
+    ext4_sb_info *sbi = EXT4_SB(inode->i_sb);
+    ext4_inode_info *ei = EXT4_I(inode);
+    vfsmount *mnt = filp->f_path.mnt;
 	  
 	  if(vfs_error){
 	    printk("got a vfs_error: %d\n", vfs_error);
@@ -220,17 +224,17 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
 	    //put the page in the cache
 	    printk("ABOUT TO ADD NEW PAGE TO CACHE\n");
 	    page_new = page_cache_alloc_cold(filp->f_path.dentry->d_inode->i_mapping);
-            if(page_new){
-            	printk("PAGE ADD CACHE SUCCESSFUL\n");
+      if(page_new){
+        printk("PAGE ADD CACHE SUCCESSFUL\n");
 	    }
 
-            printk("ABOUT TO ADD PAGE TO LRU\n");
-	    add_page_error = add_to_page_cache_lru(page_new, filp->f_path.dentry->d_inode->i_mapping, 0, GFP_KERNEL);
-            if(add_page_error){
-		printk("ERROR ADDING PAGE TO LRU: %d\n", add_page_error);
+      printk("ABOUT TO ADD PAGE TO LRU\n");
+      add_page_error = add_to_page_cache_lru(page_new, filp->f_path.dentry->d_inode->i_mapping, 0, GFP_KERNEL);
+      if(add_page_error){
+        printk("ERROR ADDING PAGE TO LRU: %d\n", add_page_error);
 	    }
 
-	    printk("ABOUT TO PERFORM READPAGE\n");
+      printk("ABOUT TO PERFORM READPAGE\n");
 	    add_page_error = filp->f_path.dentry->d_inode->i_mapping->a_ops->readpage(filp, page_new);
 
 	    if(add_page_error){
