@@ -60,8 +60,8 @@ asmlinkage int sys_ext4_cowcopy(const char __user *src, const char __user *dest)
   char *safe_src = getname(src);
   char ext4_string[] = "ext4";
 
-  int i = 1;
-  int j = 10;
+  int i;
+  uint j = 10;
 
 
   printk("safe_src: %s\n", safe_src);
@@ -123,6 +123,15 @@ asmlinkage int sys_ext4_cowcopy(const char __user *src, const char __user *dest)
     return error;
   }
 
+  //check to make sure we are keeping count of cowcopy attr correctly
+  error = ext4_xattr_get(temp_dentry->d_inode, 7, "cow_moo", &j, sizeof(int));
+  if(error < 1){
+      i=1;
+  }else{
+      i=j;
+      i++;
+  }
+
 
   printk("SETTING ATTRIBUTE\n");
   error =  ext4_xattr_set(temp_dentry->d_inode, 7, "cow_moo", &i, sizeof(int), XATTR_CREATE);
@@ -130,18 +139,11 @@ asmlinkage int sys_ext4_cowcopy(const char __user *src, const char __user *dest)
     printk("Error from setxattr: %d\n", error);
     return error;
   }
-  printk("GETTING ATTRIBUTE\n");
-  error = ext4_xattr_get(temp_dentry->d_inode,7 , "cow_moo", &j, sizeof(int));
-  if(error <0){
-    printk("Error from getxattr: %d\n", error);
-    return error;
-  }
+
 
   printk("i: %d, j: %d\n", i, j);
 
-  if(i == j){
-    printk("SUCCESS\n");
-  }
+ 
 
   return 0;
 }
