@@ -209,7 +209,10 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
 	  ei = EXT4_I(inode);
 	  mnt = filp->f_path.mnt;
 	  filp->f_mapping = filp->f_dentry->d_inode->i_mapping;
+	  inode->i_writecount.counter++;
 	  
+
+
 	  if(vfs_error){
 	    printk("got a vfs_error: %d\n", vfs_error);
 	    return vfs_error;
@@ -249,7 +252,7 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
 	      //clear_highpage(page_new);
 	      //flush_dcache_page(page_new);
 	      SetPageUptodate(page_new);
-	      set_page_dirty(page_new);
+	      /* set_page_dirty(page_new); */
               unlock_page(page_new);
 	    }
 
