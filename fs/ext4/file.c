@@ -168,10 +168,11 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
 	struct vfsmount *mnt = filp->f_path.mnt;
 	struct path path;
 	char buf[64], *cp;
-        /* struct page *page_old; */
+        struct page *page_old; 
         struct nameidata nd; //create empty nameidata for vfs_create
 	int vfs_error;
-	/* struct page *page_new; */
+	int add_page_error;
+	struct page *page_new; 
 
 	int j = 10; //to be used to get xattr
         int error = ext4_xattr_get(inode,7 , "cow_moo", &j, sizeof(int));
@@ -209,11 +210,32 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
 	    printk("no vfs error yay!!!!\n");
 	    
 	    // SETTING THE NEW inode for writting
-	    return ext4_file_open(nd.dentry->d_inode, filp);
-	    /* page_old = find_get_page(inode->i_mapping, 0); */
-	    /* if(page_old){ */
-	    /*   printk("FOUND OLD PAGE\n"); */
-	    /* } */
+	    //return ext4_file_open(nd.dentry->d_inode, filp);
+	    page_old = find_get_page(inode->i_mapping, 0); 
+	    if(page_old){ 
+	       printk("FOUND OLD PAGE\n"); 
+	    }
+
+	    //put the page in the cache
+	    printk("ABOUT TO ADD NEW PAGE TO CACHE\n");
+	    page_new = page_cache_alloc_cold(nd.dentry->d_inode->i_mapping);
+            if(page_new){
+            	printk("PAGE ADD CACHE SUCCESSFUL\n");
+	    }
+
+            printk("ABOUT TO ADD PAGE TO LRU\n");
+	    add_page_error = add_to_page_cache_lru(page_new, nd.dentry->d_inode->i_mapping, 0, GFP_KERNEL);
+            if(add_page_error){
+		printk("ERROR ADDING PAGE TO LRU: %d\n", add_page_error);
+	    }
+
+	    printk("ABOUT TO PERFORM READPAGE\n");
+	    add_page_error = nd.dentry->d_inode->i_mapping->a_ops->readpage(filp, page_new);
+
+	    if(add_page_error){
+	    	printk("ERROR READPAGE: %d\n", add_page_error);
+	    }
+
 	    /* page_new = find_get_page(filp->f_path.dentry->d_inode->i_mapping, 0); */
 	    /* if(page_new){ */
 	    /*   printk("FOUND NEW PAGE\n"); */
