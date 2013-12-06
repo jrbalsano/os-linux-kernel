@@ -168,125 +168,71 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
 	struct vfsmount *mnt = filp->f_path.mnt;
 	struct path path;
 	char buf[64], *cp;
-        struct page *page_old; 
-        /* struct nameidata nd; //create empty nameidata for vfs_create */
+  struct page *page_old; 
+  /* struct nameidata nd; //create empty nameidata for vfs_create */
 	int vfs_error;
 	struct page *page_new; 
 	struct inode *old_inode = inode;
 	int offset = 0;
 
 	int j = 10; //to be used to get xattr
-        int error = ext4_xattr_get(inode,7 , "cow_moo", &j, sizeof(int));
+  int error = ext4_xattr_get(inode,7 , "cow_moo", &j, sizeof(int));
 
-	if(error > 0 && (filp->f_mode & FMODE_READ)){
-	  printk("COW OPEN FOR READING");
-	}
+  // Handle a copy on write file being opened
+  if(error > 0 && (filp->f_mode & FMODE_WRITE)){
+    printk("\nWE'VE GOT A COWMOO and it's open for writing: %d\n", j);
 
-        if(error > 0 && (filp->f_mode & FMODE_WRITE)){
-	  printk("\nWE'VE GOT A COWMOO and it's open for writing: %d\n", j);
-          //testing vfs_create
+    vfs_error = vfs_unlink(filp->f_path.dentry->d_parent->d_inode, filp->f_path.dentry);
+    if(vfs_error){ 
+      printk("got a vfs_error unlink: %d\n", vfs_error);
+      return vfs_error;
+    }
 
-	  //call some init macro on d_alias and perhaps d_inode as well (?)
+    printk("no vfs error yay!!!!\n");
 
-          vfs_error = vfs_unlink(filp->f_path.dentry->d_parent->d_inode, filp->f_path.dentry);
-	  if(vfs_error){
-	    printk("got a vfs_error unlink: %d\n", vfs_error);
-	  }
-	  else{
-	    printk("no vfs error yay!!!!\n");
-	  }
-	  
-	  filp->f_path.dentry->d_inode= NULL;
-	  
-	  INIT_LIST_HEAD(&filp->f_path.dentry->d_alias);
-	  
-	  // CREATING THE NEW INODE
-	  vfs_error = vfs_create(filp->f_dentry->d_parent->d_inode, filp->f_dentry, inode->i_mode, NULL);
-	  inode = filp->f_dentry->d_inode;
-          inode->i_size = old_inode->i_size;
-	  sb = inode->i_sb;
-	  sbi = EXT4_SB(inode->i_sb);
-	  ei = EXT4_I(inode);
-	  mnt = filp->f_path.mnt;
-	  filp->f_mapping = filp->f_dentry->d_inode->i_mapping;
-	  inode->i_writecount.counter++;
-	  
+    // Init dentry values
+    filp->f_path.dentry->d_inode= NULL;	  
+    INIT_LIST_HEAD(&filp->f_path.dentry->d_alias);
 
+    // Create the new Inode 
+    vfs_error = vfs_create(filp->f_dentry->d_parent->d_inode, filp->f_dentry, inode->i_mode, NULL);
 
-	  if(vfs_error){
-	    printk("got a vfs_error: %d\n", vfs_error);
-	    return vfs_error;
-	  }
-	  else{
-	    printk("no vfs error yay!!!!\n");
-	    
-	    // SETTING THE NEW inode for writting
-	    //return ext4_file_open(nd.dentry->d_inode, filp);
+    if(vfs_error){
+      printk("got a vfs_error: %d\n", vfs_error);
+      return vfs_error;
+    }
+    printk("no vfs error yay!!!!\n");
+    // Initialize the new inode and local variables
+    inode = filp->f_dentry->d_inode;
+    inode->i_size = old_inode->i_size;
+    sb = inode->i_sb;
+    sbi = EXT4_SB(inode->i_sb);
+    ei = EXT4_I(inode);
+    mnt = filp->f_path.mnt;
+    filp->f_mapping = filp->f_dentry->d_inode->i_mapping;
+    inode->i_writecount.counter++;
 
+    // Copy the pages to the new inode
+    for(offset = 0; offset < old_inode->i_mapping->nrpages; offset++){
+      page_old = find_get_page(old_inode->i_mapping, offset);
+      page_new = find_or_create_page(inode->i_mapping, offset, mapping_gfp_mask(inode->i_mapping));
 
-	    for(offset = 0; offset < old_inode->i_mapping->nrpages; offset++){
-	      page_old = find_get_page(old_inode->i_mapping, offset);
-	      
-	      if(page_old){ 
-		printk("FOUND OLD PAGE\n"); 
-	      }
-	      
-	    
-	      page_new = find_or_create_page(inode->i_mapping, offset, mapping_gfp_mask(inode->i_mapping));
-	 
+      unlock_page(page_new);
 
-	      unlock_page(page_new);
-	      
-	      if(page_new){
-		printk("SUCESS! created page_new\n");
-	      } else {
-                printk("Dammmit. error creating page_new\n");
-	      }
-	      printk("CONTENT OLD: %s\n", (char *)kmap(page_old));
-	      if(memcpy(kmap(page_new), kmap(page_old), PAGE_SIZE)){
-		printk("memcpy works!!\n");
-	      }
-	      kunmap(page_new);
-	      kunmap(page_old);
-	      printk("CONTENT new: %s\n", (char *)kmap(page_new));
-	      //clear_highpage(page_new);
-	      //flush_dcache_page(page_new);
-	      SetPageUptodate(page_new);
-	      /* set_page_dirty(page_new); */
-              unlock_page(page_new);
-	    }
-
-
-/*
-	    //put the page in the cache
-	    printk("ABOUT TO ADD NEW PAGE TO CACHE\n");
-	    page_new = page_cache_alloc_cold(filp->f_path.dentry->d_inode->i_mapping);
-	    if(page_new){
-	      printk("PAGE ADD CACHE SUCCESSFUL\n");
-	    }
-	    
-	    printk("ABOUT TO ADD PAGE TO LRU\n");
-	    add_page_error = add_to_page_cache_lru(page_new, filp->f_path.dentry->d_inode->i_mapping, 0, GFP_KERNEL);
-	    if(add_page_error){
-	      printk("ERROR ADDING PAGE TO LRU: %d\n", add_page_error);
-	    }
-
-	    printk("ABOUT TO PERFORM READPAGE\n");
-	    add_page_error = filp->f_path.dentry->d_inode->i_mapping->a_ops->readpage(filp, page_new);
-	    
-	    if(add_page_error){
-	      printk("ERROR READPAGE: %d\n", add_page_error);
-	    }
-*/
-
-
-
-	    /* page_new = find_get_page(filp->f_path.dentry->d_inode->i_mapping, 0); */
-	    /* if(page_new){ */
-	    /*   printk("FOUND NEW PAGE\n"); */
-	    //}
-	  }
-	}
+      if(!page_new){
+        printk("Dammmit. error creating page_new\n");
+        return -1;
+      }
+      printk("SUCESS! created page_new\n");
+      printk("CONTENT OLD: %s\n", (char *)kmap(page_old));
+      if(memcpy(kmap(page_new), kmap(page_old), PAGE_SIZE)){ printk("memcpy works!!\n"); }
+      kunmap(page_new);
+      kunmap(page_old);
+      printk("CONTENT new: %s\n", (char *)kmap(page_new));
+      SetPageUptodate(page_new);
+      unlock_page(page_new);
+    }
+  }
 	
 
 	if (unlikely(!(sbi->s_mount_flags & EXT4_MF_MNTDIR_SAMPLED) &&
