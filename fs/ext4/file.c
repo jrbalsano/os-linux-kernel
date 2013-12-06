@@ -171,10 +171,9 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
         struct page *page_old; 
         /* struct nameidata nd; //create empty nameidata for vfs_create */
 	int vfs_error;
-	int add_page_error;
 	struct page *page_new; 
 	struct inode *old_inode = inode;
-
+	int offset = 0;
 
 	int j = 10; //to be used to get xattr
         int error = ext4_xattr_get(inode,7 , "cow_moo", &j, sizeof(int));
@@ -204,6 +203,7 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
 	  // CREATING THE NEW INODE
 	  vfs_error = vfs_create(filp->f_dentry->d_parent->d_inode, filp->f_dentry, inode->i_mode, NULL);
 	  inode = filp->f_dentry->d_inode;
+          inode->i_size = old_inode->i_size;
 	  sb = inode->i_sb;
 	  sbi = EXT4_SB(inode->i_sb);
 	  ei = EXT4_I(inode);
@@ -221,19 +221,39 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
 	    //return ext4_file_open(nd.dentry->d_inode, filp);
 
 
-	    page_old = find_get_page(old_inode->i_mapping, 0); 
-	    if(page_old){ 
-	       printk("FOUND OLD PAGE\n"); 
-	    }
+	    for(offset = 0; offset < old_inode->i_mapping->nrpages; offset++){
+	      page_old = find_get_page(old_inode->i_mapping, offset);
+	      
+	      if(page_old){ 
+		printk("FOUND OLD PAGE\n"); 
+	      }
+	      
+	    
+	      page_new = find_or_create_page(inode->i_mapping, offset, mapping_gfp_mask(inode->i_mapping));
+	 
 
-     
-            page_new = find_or_create_page(filp->f_path.dentry->d_inode->i_mapping, 0, GFP_USER);
-
-	    if(page_new){
+	      unlock_page(page_new);
+	      
+	      if(page_new){
 		printk("SUCESS! created page_new\n");
-	    } else {
+	      } else {
                 printk("Dammmit. error creating page_new\n");
+	      }
+	      printk("CONTENT OLD: %s\n", (char *)kmap(page_old));
+	      if(memcpy(kmap(page_new), kmap(page_old), PAGE_SIZE)){
+		printk("memcpy works!!\n");
+	      }
+	      kunmap(page_new);
+	      kunmap(page_old);
+	      printk("CONTENT new: %s\n", (char *)kmap(page_new));
+	      //clear_highpage(page_new);
+	      //flush_dcache_page(page_new);
+	      SetPageUptodate(page_new);
+	      set_page_dirty(page_new);
+              unlock_page(page_new);
 	    }
+
+
 /*
 	    //put the page in the cache
 	    printk("ABOUT TO ADD NEW PAGE TO CACHE\n");
