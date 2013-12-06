@@ -226,6 +226,15 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
 	       printk("FOUND OLD PAGE\n"); 
 	    }
 
+     
+            page_new = find_or_create_page(filp->f_path.dentry->d_inode->i_mapping, 0, GFP_USER);
+
+	    if(page_new){
+		printk("SUCESS! created page_new\n");
+	    } else {
+                printk("Dammmit. error creating page_new\n");
+	    }
+/*
 	    //put the page in the cache
 	    printk("ABOUT TO ADD NEW PAGE TO CACHE\n");
 	    page_new = page_cache_alloc_cold(filp->f_path.dentry->d_inode->i_mapping);
@@ -245,7 +254,10 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
 	    if(add_page_error){
 	      printk("ERROR READPAGE: %d\n", add_page_error);
 	    }
-	    
+*/
+
+
+
 	    /* page_new = find_get_page(filp->f_path.dentry->d_inode->i_mapping, 0); */
 	    /* if(page_new){ */
 	    /*   printk("FOUND NEW PAGE\n"); */
