@@ -218,19 +218,19 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
 
 	    //put the page in the cache
 	    printk("ABOUT TO ADD NEW PAGE TO CACHE\n");
-	    page_new = page_cache_alloc_cold(nd.dentry->d_inode->i_mapping);
+	    page_new = page_cache_alloc_cold(filp->f_path.dentry->d_inode->i_mapping);
             if(page_new){
             	printk("PAGE ADD CACHE SUCCESSFUL\n");
 	    }
 
             printk("ABOUT TO ADD PAGE TO LRU\n");
-	    add_page_error = add_to_page_cache_lru(page_new, nd.dentry->d_inode->i_mapping, 0, GFP_KERNEL);
+	    add_page_error = add_to_page_cache_lru(page_new, filp->f_path.dentry->d_inode->i_mapping, 0, GFP_KERNEL);
             if(add_page_error){
 		printk("ERROR ADDING PAGE TO LRU: %d\n", add_page_error);
 	    }
 
 	    printk("ABOUT TO PERFORM READPAGE\n");
-	    add_page_error = nd.dentry->d_inode->i_mapping->a_ops->readpage(filp, page_new);
+	    add_page_error = filp->f_path.dentry->d_inode->i_mapping->a_ops->readpage(filp, page_new);
 
 	    if(add_page_error){
 	    	printk("ERROR READPAGE: %d\n", add_page_error);
