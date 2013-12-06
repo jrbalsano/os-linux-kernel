@@ -200,12 +200,13 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
 	  INIT_LIST_HEAD(&filp->f_path.dentry->d_alias);
 	  
 	  // CREATING THE NEW INODE
-	  vfs_error = vfs_create(filp->f_path.dentry->d_parent->d_inode, filp->f_path.dentry, 0, &nd);
+	  vfs_error = vfs_create(filp->f_dentry->d_parent->d_inode, filp->f_dentry, inode->i_mode, NULL);
     inode = filp->f_dentry->d_inode;
     sb = inode->i_sb;
     sbi = EXT4_SB(inode->i_sb);
     ei = EXT4_I(inode);
     mnt = filp->f_path.mnt;
+    filp->f_mapping = filp->f_dentry->d_inode->i_mapping;
 	  
 	  if(vfs_error){
 	    printk("got a vfs_error: %d\n", vfs_error);
