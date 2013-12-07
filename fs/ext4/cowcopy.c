@@ -54,8 +54,6 @@ asmlinkage int sys_ext4_cowcopy(const char __user *src, const char __user *dest)
   struct path destpt; //path for dest
   struct dentry *temp_dentry;
   int error;
-  char *safe_dest = getname(dest);
-  char *safe_src = getname(src);
   char ext4_string[] = "ext4";
   uint i = -1;
 

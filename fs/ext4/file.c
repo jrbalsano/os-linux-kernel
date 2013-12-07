@@ -213,8 +213,7 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
       unlock_page(page_new);
 
       if(!page_new){ return -1; }
-      bytes_read = memcpy(kmap(page_new), kmap(page_old), PAGE_SIZE)
-      if (bytes_read < 1) { return -1; }
+      if(!memcpy(kmap(page_new), kmap(page_old), PAGE_SIZE)) { return -1; }
       kunmap(page_new);
       kunmap(page_old);
       SetPageUptodate(page_new);
