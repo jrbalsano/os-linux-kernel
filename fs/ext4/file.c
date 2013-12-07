@@ -185,7 +185,6 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
     // Update the number of copies in existence
     j--;
     bytes_read = ext4_xattr_set(inode, 7, "cow_moo", &j, sizeof(int), XATTR_REPLACE);
-    if (bytes_read < 1) { return -1; }
 
     // Init dentry values
     filp->f_path.dentry->d_inode= NULL;	  
@@ -213,7 +212,7 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
       unlock_page(page_new);
 
       if(!page_new){ return -1; }
-      if(!memcpy(kmap(page_new), kmap(page_old), PAGE_SIZE)) { return -1; }
+      memcpy(kmap(page_new), kmap(page_old), PAGE_SIZE);
       kunmap(page_new);
       kunmap(page_old);
       SetPageUptodate(page_new);
