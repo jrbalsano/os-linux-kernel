@@ -175,11 +175,11 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
 	struct inode *old_inode = inode;
 	int offset = 0;
 
-	int j = 10; //to be used to get xattr
+	int j = -1; //to be used to get xattr
   int error = ext4_xattr_get(inode,7 , "cow_moo", &j, sizeof(int));
 
   // Handle a copy on write file being opened
-  if(error > 0 && (filp->f_mode & FMODE_WRITE)){
+  if(error > 0 && j > 0 && (filp->f_mode & FMODE_WRITE)){
     printk("\nWE'VE GOT A COWMOO and it's open for writing: %d\n", j);
 
     vfs_error = vfs_unlink(filp->f_path.dentry->d_parent->d_inode, filp->f_path.dentry);
@@ -187,6 +187,10 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
       printk("got a vfs_error unlink: %d\n", vfs_error);
       return vfs_error;
     }
+
+    // Update the number of copies in existence
+    j--;
+    error =  ext4_xattr_set(inode, 7, "cow_moo", &j, sizeof(int), XATTR_REPLACE);
 
     printk("no vfs error yay!!!!\n");
 
