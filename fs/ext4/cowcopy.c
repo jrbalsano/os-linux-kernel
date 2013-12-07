@@ -50,8 +50,6 @@
 
 asmlinkage int sys_ext4_cowcopy(const char __user *src, const char __user *dest) {
 
-  /* struct file * myFile = filp_open(src, O_RDONLY, 0644); */
-  
   struct path pt; //path for src
   struct path destpt; //path for dest
   struct dentry *temp_dentry;
@@ -59,71 +57,43 @@ asmlinkage int sys_ext4_cowcopy(const char __user *src, const char __user *dest)
   char *safe_dest = getname(dest);
   char *safe_src = getname(src);
   char ext4_string[] = "ext4";
-
   uint i = -1;
-
-
-  printk("safe_src: %s\n", safe_src);
-  printk("safe_dest: %s\n", safe_dest);
 
   error = user_path_at(AT_FDCWD, src, 0, &pt);
   if (error) { return error; }
-  printk("\n\nChecking for errors\n\n");
 
   // Check if file is a directory or not
   if(!S_ISREG(pt.dentry->d_inode->i_mode)){ return (-EPERM); }
 
   // Check if src is in a ext4 file system
-  printk("FILE SYSTEM TYPE: %s\n", pt.dentry->d_sb->s_type->name);
   if(strcmp(ext4_string, pt.dentry->d_sb->s_type->name)){ return (-EOPNOTSUPP); }
 
-  temp_dentry = user_path_create(AT_FDCWD, dest, &destpt, 0);
   // Check if file already exists
+  temp_dentry = user_path_create(AT_FDCWD, dest, &destpt, 0);
   if(temp_dentry == ERR_PTR(-EEXIST)){ return (-EEXIST); }
+
   // Check if src and dest are in the same device
   if(pt.mnt->mnt_root != destpt.mnt->mnt_root) { return (-EXDEV); }
 
   // Check if file is being written to
-  printk("\n\nCHECKING IF BEING WRITTEN TO\n\n");
   if (pt.dentry->d_inode->i_writecount.counter > 0) { return -EPERM; }
 
-  printk("Passed all tests\n");
-
-  //AT_FDXWD, user_path_create, link, open are inside namei.c
-  // For set xattr use functions in fs/ext4/xattr
-
-
-  printk("MAKING HARD LINK\n");
+  // Make a hard link
   error = vfs_link(pt.dentry, destpt.dentry->d_inode, temp_dentry);
   mnt_drop_write(destpt.mnt);
   dput(temp_dentry);
   mutex_unlock(&destpt.dentry->d_inode->i_mutex);
   path_put(&destpt);
   path_put(&pt);
-  if (error){
-    printk("error: %d\n", error);
-    return error;
-  }
+  if (error){ return error; }
 
   //check to make sure we are keeping count of cowcopy attr correctly
   error = ext4_xattr_get(temp_dentry->d_inode, 7, "cow_moo", &i, sizeof(int));
-  if(error < 1){
-      i=1;
-  }else{
-      i++;
-  }
+  error < 1 ? i = 1 : i++;
 
-  printk("SETTING ATTRIBUTE\n");
+  // Set the correct count
   error =  ext4_xattr_set(temp_dentry->d_inode, 7, "cow_moo", &i, sizeof(int), 0);
-  if(error){
-    printk("Error from setxattr: %d\n", error);
-    return error;
-  }
-
-
-  printk("i: %d\n", i);
-
- 
+  if(error){ return error; }
 
   return 0;
 }

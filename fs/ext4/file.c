@@ -174,25 +174,18 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
 	struct page *page_new; 
 	struct inode *old_inode = inode;
 	int offset = 0;
-
 	int j = -1; //to be used to get xattr
-  int error = ext4_xattr_get(inode,7 , "cow_moo", &j, sizeof(int));
+  int bytes_read = ext4_xattr_get(inode,7 , "cow_moo", &j, sizeof(int));
 
   // Handle a copy on write file being opened
-  if(error > 0 && j > 0 && (filp->f_mode & FMODE_WRITE)){
-    printk("\nWE'VE GOT A COWMOO and it's open for writing: %d\n", j);
-
+  if(bytes_read > 0 && j > 0 && (filp->f_mode & FMODE_WRITE)){
     vfs_error = vfs_unlink(filp->f_path.dentry->d_parent->d_inode, filp->f_path.dentry);
-    if(vfs_error){ 
-      printk("got a vfs_error unlink: %d\n", vfs_error);
-      return vfs_error;
-    }
+    if(vfs_error){ return vfs_error; }
 
     // Update the number of copies in existence
     j--;
-    error =  ext4_xattr_set(inode, 7, "cow_moo", &j, sizeof(int), XATTR_REPLACE);
-
-    printk("no vfs error yay!!!!\n");
+    bytes_read = ext4_xattr_set(inode, 7, "cow_moo", &j, sizeof(int), XATTR_REPLACE);
+    if (bytes_read < 1) { return -1; }
 
     // Init dentry values
     filp->f_path.dentry->d_inode= NULL;	  
@@ -201,11 +194,7 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
     // Create the new Inode 
     vfs_error = vfs_create(filp->f_dentry->d_parent->d_inode, filp->f_dentry, inode->i_mode, NULL);
 
-    if(vfs_error){
-      printk("got a vfs_error: %d\n", vfs_error);
-      return vfs_error;
-    }
-    printk("no vfs error yay!!!!\n");
+    if(vfs_error){ return vfs_error; }
     // Initialize the new inode and local variables
     inode = filp->f_dentry->d_inode;
     inode->i_size = old_inode->i_size;
@@ -223,16 +212,11 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
 
       unlock_page(page_new);
 
-      if(!page_new){
-        printk("Dammmit. error creating page_new\n");
-        return -1;
-      }
-      printk("SUCESS! created page_new\n");
-      printk("CONTENT OLD: %s\n", (char *)kmap(page_old));
-      if(memcpy(kmap(page_new), kmap(page_old), PAGE_SIZE)){ printk("memcpy works!!\n"); }
+      if(!page_new){ return -1; }
+      bytes_read = memcpy(kmap(page_new), kmap(page_old), PAGE_SIZE)
+      if (bytes_read < 1) { return -1; }
       kunmap(page_new);
       kunmap(page_old);
-      printk("CONTENT new: %s\n", (char *)kmap(page_new));
       SetPageUptodate(page_new);
       unlock_page(page_new);
     }
