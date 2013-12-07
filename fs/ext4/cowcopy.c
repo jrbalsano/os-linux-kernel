@@ -68,45 +68,28 @@ asmlinkage int sys_ext4_cowcopy(const char __user *src, const char __user *dest)
   printk("safe_dest: %s\n", safe_dest);
 
   error = user_path_at(AT_FDCWD, src, 0, &pt);
-  if(!error){
-    printk("\n\nChecking for errors\n\n");
-    
-    // Check if file is a directory or not
-    if(!S_ISREG(pt.dentry->d_inode->i_mode)){
-      printk("\n\nCHECKING IF IT'S DIRECTORY\n\n");
-      return (-EPERM);
-    }
-    
-    // Check if src is in a ext4 file system
-    printk("FILE SYSTEM TYPE: %s\n", pt.dentry->d_sb->s_type->name);
-    if(strcmp(ext4_string, pt.dentry->d_sb->s_type->name)){
-      return (-EOPNOTSUPP);
-    }
-    
-    temp_dentry = user_path_create(AT_FDCWD, dest, &destpt, 0);
-    // Check if file already exists
-    if(temp_dentry == ERR_PTR(-EEXIST)){
-      return (-EEXIST);
-    }
-    // Check if src and dest are in the same device
-    if(pt.mnt->mnt_root != destpt.mnt->mnt_root){
-      return (-EXDEV);
-    }
+  if (error) { return error; }
+  printk("\n\nChecking for errors\n\n");
 
-    // Check if file is being written to
-    printk("\n\nCHECKING IF BEING WRITTEN TO\n\n");
-    if (pt.dentry->d_inode->i_writecount.counter > 0) {
-      return -EPERM;
-    }
-    
-    printk("Passed all tests\n");
-  }
-  else {
-    printk("error: %d", error);
-    return error;
-  }
+  // Check if file is a directory or not
+  if(!S_ISREG(pt.dentry->d_inode->i_mode)){ return (-EPERM); }
 
-  
+  // Check if src is in a ext4 file system
+  printk("FILE SYSTEM TYPE: %s\n", pt.dentry->d_sb->s_type->name);
+  if(strcmp(ext4_string, pt.dentry->d_sb->s_type->name)){ return (-EOPNOTSUPP); }
+
+  temp_dentry = user_path_create(AT_FDCWD, dest, &destpt, 0);
+  // Check if file already exists
+  if(temp_dentry == ERR_PTR(-EEXIST)){ return (-EEXIST); }
+  // Check if src and dest are in the same device
+  if(pt.mnt->mnt_root != destpt.mnt->mnt_root) { return (-EXDEV); }
+
+  // Check if file is being written to
+  printk("\n\nCHECKING IF BEING WRITTEN TO\n\n");
+  if (pt.dentry->d_inode->i_writecount.counter > 0) { return -EPERM; }
+
+  printk("Passed all tests\n");
+
   //AT_FDXWD, user_path_create, link, open are inside namei.c
   // For set xattr use functions in fs/ext4/xattr
 
