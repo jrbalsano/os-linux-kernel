@@ -73,14 +73,18 @@ build:
 test: build
 	@echo === Pushing application to the device ===
 	@$(ADB) push libs/$(APP_ARCH)/$(APP_NAME) /data/local/tmp
+	@$(ADB) shell touch /data/local/tmp/test
 	@$(ADB) shell chmod 777 /data/local/tmp/$(APP_NAME)
-	@$(ADB) shell mkdir /data/local/tmp/test
+	@$(ADB) shell chmod 777 /data/local/tmp/test
 	@echo === Running application ===
 	@$(ADB) shell /data/local/tmp/hw5_test
 
 uninstall:
 	@echo === Removing application ===
-	@$(ADB) shell rm -f /data/local/tmp/$(APP_NAME)
+	@$(ADB) shell rm -r /data/local/tmp/hw5_test
+	@$(ADB) shell rm -r /data/local/tmp/test_file
+	@$(ADB) shell rm -r /data/local/tmp/test
+
 
 clean:
 	rm -rf libs obj

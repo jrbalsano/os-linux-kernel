@@ -121,7 +121,7 @@ asmlinkage int sys_ext4_cowcopy(const char __user *src, const char __user *dest)
   }
 
 
-  printk("i: %d, j: %d\n", i, j);
+  printk("i: %d\n", i);
 
  
 
